@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
-import { ExternalLink, Folder } from "lucide-react";
+import { Copy, Check, ExternalLink, Folder } from "lucide-react";
 
 function App() {
   const [tabGroups, setTabGroups] = useState<chrome.tabGroups.TabGroup[]>([]);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [selectedGroup, setSelectedGroup] =
     useState<chrome.tabGroups.TabGroup | null>(null);
+  const [copiedStates, setCopiedStates] = useState<{ [key: string]: boolean }>(
+    {}
+  );
 
   useEffect(() => {
     // Auto-load tab groups on component mount
@@ -28,6 +31,32 @@ function App() {
       setSelectedGroup(group);
     } catch (error) {
       console.error("Error loading tabs:", error);
+    }
+  };
+
+  const copyToClipboard = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedStates((prev) => ({ ...prev, [key]: true }));
+      setTimeout(() => {
+        setCopiedStates((prev) => ({ ...prev, [key]: false }));
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+    }
+  };
+
+  const copyAllLinks = () => {
+    const allLinks = tabs
+      .filter((tab) => tab.url)
+      .map((tab) => tab.url)
+      .join("\n");
+    copyToClipboard(allLinks, "all-links");
+  };
+
+  const copyTabLink = (tab: chrome.tabs.Tab) => {
+    if (tab.url) {
+      copyToClipboard(tab.url, `tab-${tab.id}`);
     }
   };
 
@@ -57,7 +86,7 @@ function App() {
               Tab Manager
             </h1>
             <p className="text-purple-100 mt-2">
-              View and organize your browser tab groups
+              Organize and copy your browser tabs
             </p>
           </div>
 
@@ -127,6 +156,24 @@ function App() {
                     Tabs in "{selectedGroup.title || "Untitled Group"}" (
                     {tabs.length})
                   </h2>
+                  {tabs.length > 0 && (
+                    <button
+                      onClick={copyAllLinks}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 text-sm font-medium"
+                    >
+                      {copiedStates["all-links"] ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copy All Links
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 {tabs.length === 0 ? (
@@ -165,6 +212,17 @@ function App() {
                               </p>
                             )}
                           </div>
+                          <button
+                            onClick={() => copyTabLink(tab)}
+                            className="flex-shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors duration-200"
+                            title="Copy link"
+                          >
+                            {copiedStates[`tab-${tab.id}`] ? (
+                              <Check className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     ))}
