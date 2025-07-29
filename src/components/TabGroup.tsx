@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import TabList from "./TabList";
 import { getGroupColor } from "../utils/colorUtils";
 import LoadingSpinner from "./LoadingSpinner";
@@ -13,6 +15,20 @@ const TabGroup = ({ group }: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: group.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const toggleGroupTabs = async () => {
     if (isOpen) {
@@ -33,15 +49,21 @@ const TabGroup = ({ group }: TabGroupProps) => {
 
   return (
     <div
+      ref={setNodeRef}
+      style={style}
       className={`p-3 rounded-material-medium border-2 transition-all duration-[var(--animate-material-standard)] ${
-        isOpen
+        isDragging
+          ? "border-material-primary bg-material-elevated shadow-material-4 opacity-50"
+          : isOpen
           ? "border-material-primary bg-material-elevated shadow-material-4"
           : "border-material-border bg-material-surface hover:border-material-primary hover:bg-material-elevated shadow-material-1"
       }`}
     >
       <div className="flex items-center gap-3">
         <button
-          className="p-1 hover:rounded-material-small hover:bg-material-elevated text-material-text-secondary hover:text-material-text-primary cursor-grab transition-all duration-[var(--animate-material-fast)] hover:shadow-material-2"
+          {...attributes}
+          {...listeners}
+          className="p-1 hover:rounded-material-small hover:bg-material-elevated text-material-text-secondary hover:text-material-text-primary cursor-grab active:cursor-grabbing transition-all duration-[var(--animate-material-fast)] hover:shadow-material-2"
           title="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />

@@ -1,7 +1,25 @@
 import { useState, useEffect } from "react";
 import { Folder, RefreshCw, Plus } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import Header from "./components/Header";
 import TabGroupList from "./components/TabGroupList";
+import TabGroup from "./components/TabGroup";
 import NoGroupsMessage from "./components/NoGroupsMessage";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
@@ -16,6 +34,36 @@ function App() {
   const [isGroupEditorOpen, setIsGroupEditorOpen] = useState(false);
   const [editingGroup, setEditingGroup] =
     useState<chrome.tabGroups.TabGroup | null>(null);
+  const [activeGroup, setActiveGroup] =
+    useState<chrome.tabGroups.TabGroup | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const group = tabGroups.find((group) => group.id === active.id);
+    setActiveGroup(group || null);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setTabGroups((groups) => {
+        const oldIndex = groups.findIndex((group) => group.id === active.id);
+        const newIndex = groups.findIndex((group) => group.id === over.id);
+
+        return arrayMove(groups, oldIndex, newIndex);
+      });
+    }
+
+    setActiveGroup(null);
+  };
 
   const loadTabGroups = async () => {
     setLoading(true);
@@ -118,7 +166,22 @@ function App() {
             ) : tabGroups.length === 0 ? (
               <NoGroupsMessage />
             ) : (
-              <TabGroupList tabGroups={tabGroups} />
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={tabGroups.map((group) => group.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <TabGroupList tabGroups={tabGroups} />
+                </SortableContext>
+                <DragOverlay>
+                  {activeGroup ? <TabGroup group={activeGroup} /> : null}
+                </DragOverlay>
+              </DndContext>
             )}
           </div>
         </div>
