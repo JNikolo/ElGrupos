@@ -86,10 +86,10 @@ function App() {
 
   const toggleTabsView = () => {
     setShowTabs(!showTabs);
-    if (!showTabs) {
-      setSelectedGroup(null);
-      setTabs([]);
-    }
+    // if (!showTabs) {
+    //   setSelectedGroup(null);
+    //   setTabs([]);
+    // }
   };
 
   return (
@@ -107,7 +107,7 @@ function App() {
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex-1 p-4 overflow-y-auto scrollbar-custom">
           {/* Tab Groups Section */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
@@ -241,7 +241,7 @@ function App() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1 scrollbar-custom">
                     {tabs.map((tab) => (
                       <div
                         key={tab.id}
