@@ -37,3 +37,60 @@
     background: transparent;
   }
 }
+
+@theme {
+  /* Custom Colors */
+  --color-material-dark: #212121;
+  --color-material-surface: #424242;
+  --color-material-border: #616161;
+  --color-material-elevated: #2d2d2d;
+
+  /* Primary Colors */
+  --color-material-primary: #bb86fc;
+  --color-material-primary-dark: #9c6bfc;
+  --color-material-primary-light: #ccabfc;
+
+  /* Secondary Colors */
+  --color-material-secondary: #03dac6;
+  --color-material-secondary-dark: #00b8a6;
+  --color-material-secondary-light: #4dffe6;
+
+  /* Text Colors */
+  --color-material-text-primary: #ffffff;
+  --color-material-text-secondary: #ffffff99; /* 60% opacity */
+  --color-material-text-disabled: #ffffff61; /* 38% opacity */
+
+  /* Status Colors */
+  --color-material-success: #4caf50;
+  --color-material-warning: #ff9800;
+  --color-material-error: #f44336;
+  --color-material-info: #2196f3;
+
+  /* Dividers and overlays */
+  --color-material-divider: #ffffff1f; /* 12% opacity */
+  --color-material-overlay: #00000080; /* 50% opacity */
+
+  /* Material Design Shadows */
+  --shadow-material-1: 0px 2px 1px -1px rgb(0 0 0 / 0.2),
+    0px 1px 1px 0px rgb(0 0 0 / 0.14), 0px 1px 3px 0px rgb(0 0 0 / 0.12);
+
+  --shadow-material-2: 0px 3px 1px -2px rgb(0 0 0 / 0.2),
+    0px 2px 2px 0px rgb(0 0 0 / 0.14), 0px 1px 5px 0px rgb(0 0 0 / 0.12);
+
+  --shadow-material-4: 0px 2px 4px -1px rgb(0 0 0 / 0.2),
+    0px 4px 5px 0px rgb(0 0 0 / 0.14), 0px 1px 10px 0px rgb(0 0 0 / 0.12);
+
+  --shadow-material-8: 0px 5px 5px -3px rgb(0 0 0 / 0.2),
+    0px 8px 10px 1px rgb(0 0 0 / 0.14), 0px 3px 14px 2px rgb(0 0 0 / 0.12);
+
+  /* Animation Durations */
+  --animate-material-fast: 150ms;
+  --animate-material-standard: 250ms;
+  --animate-material-slow: 375ms;
+
+  /* Border Radius */
+  --radius-material-small: 4px;
+  --radius-material-medium: 8px;
+  --radius-material-large: 12px;
+  --radius-material-pill: 9999px;
+}

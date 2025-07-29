@@ -27,23 +27,23 @@ const TabGroup = ({ group }: TabGroupProps) => {
 
   return (
     <div
-      className={`p-3 rounded-xl border-2 transition-all duration-200 ${
+      className={`p-3 rounded-material-medium border-2 transition-all duration-[var(--animate-material-standard)] ${
         isOpen
-          ? "border-purple-400 bg-purple-500/20 shadow-lg"
-          : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+          ? "border-material-primary bg-material-elevated shadow-material-4"
+          : "border-material-border bg-material-surface hover:border-material-primary hover:bg-material-elevated shadow-material-1"
       }`}
     >
       <div className="flex items-center gap-3">
         <div className={`w-3 h-3 rounded-full ${getGroupColor(group.color)}`} />
-        <span className="font-medium text-white text-sm flex-1 truncate">
+        <span className="font-medium text-material-text-primary text-sm flex-1 truncate">
           {group.title || "Untitled Group"}
         </span>
         <button
           onClick={toggleGroupTabs}
-          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+          className={`px-2 py-1 rounded-material-small text-xs font-medium transition-colors duration-[var(--animate-material-fast)] ${
             isOpen
-              ? "bg-purple-500 text-white"
-              : "bg-white/10 text-gray-300 hover:bg-white/20"
+              ? "bg-material-primary text-material-text-primary shadow-material-1"
+              : "bg-material-border text-material-text-secondary hover:bg-material-elevated"
           }`}
         >
           {isOpen ? (
@@ -55,7 +55,7 @@ const TabGroup = ({ group }: TabGroupProps) => {
       </div>
 
       <div
-        className={`transition-all duration-300 overflow-hidden ${
+        className={`transition-all duration-[var(--animate-material-slow)] overflow-hidden ${
           isOpen ? "max-h-96 mt-3" : "max-h-0"
         }`}
       >

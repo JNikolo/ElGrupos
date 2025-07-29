@@ -25,11 +25,11 @@ const CopyButton = ({ textToCopy, id, isIcon = false }: CopyButtonProps) => {
       <button
         id={id}
         onClick={copy}
-        className="flex-shrink-0 p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+        className="flex-shrink-0 p-1 text-material-text-secondary hover:text-material-text-primary hover:bg-material-elevated rounded-material-small transition-colors duration-[var(--animate-material-fast)]"
         title="Copy link"
       >
         {isCopied ? (
-          <Check className="w-3 h-3 text-green-400" />
+          <Check className="w-3 h-3 text-material-success" />
         ) : (
           <Copy className="w-3 h-3" />
         )}
@@ -41,10 +41,10 @@ const CopyButton = ({ textToCopy, id, isIcon = false }: CopyButtonProps) => {
     <button
       id={id}
       onClick={copy}
-      className={`flex items-center gap-1 px-2 py-1 text-xs rounded-md font-medium transition-colors ${
+      className={`flex items-center gap-1 px-2 py-1 text-xs rounded-material-small font-medium transition-colors duration-[var(--animate-material-fast)] shadow-material-1 ${
         isCopied
-          ? "bg-green-600 text-white"
-          : "bg-green-600 hover:bg-green-700 text-white"
+          ? "bg-material-success text-material-text-primary"
+          : "bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary"
       }`}
     >
       {isCopied ? (

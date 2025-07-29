@@ -21,23 +21,23 @@ function App() {
   }, []);
 
   return (
-    <div className="w-96 h-[600px] bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex flex-col overflow-hidden">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 flex flex-col h-full overflow-hidden">
+    <div className="w-96 h-[600px] bg-material-dark flex flex-col overflow-hidden">
+      <div className="bg-material-surface border border-material-border flex flex-col h-full overflow-hidden shadow-material-2">
         <Header />
 
         <div className="flex-1 p-4 overflow-y-auto scrollbar-custom">
           <div className="mb-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <h2 className="text-lg font-semibold text-material-text-primary flex items-center gap-2">
                 <Folder className="w-4 h-4" />
                 Groups
-                <span className="bg-purple-500 text-white text-xs px-2 py-1 rounded-full">
+                <span className="bg-material-primary text-material-text-primary text-xs px-2 py-1 rounded-material-pill">
                   {tabGroups.length}
                 </span>
               </h2>
               <button
                 onClick={loadTabGroups}
-                className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium flex items-center gap-1"
+                className="px-3 py-1 bg-material-primary hover:bg-material-primary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
               >
                 <RefreshCw className="w-3 h-3" />
                 Refresh

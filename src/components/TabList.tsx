@@ -10,9 +10,11 @@ interface TabListProps {
 const TabList = ({ tabs, groupId }: TabListProps) => {
   if (!tabs.length) {
     return (
-      <div className="text-center py-4 bg-white/5 rounded-xl border border-white/10 mt-2">
-        <ExternalLink className="w-8 h-8 mx-auto text-gray-400 opacity-50 mb-2" />
-        <p className="text-gray-400 text-sm">No tabs in this group</p>
+      <div className="text-center py-4 bg-material-surface rounded-material-medium border border-material-border mt-2 shadow-material-1">
+        <ExternalLink className="w-8 h-8 mx-auto text-material-text-disabled mb-2" />
+        <p className="text-material-text-secondary text-sm">
+          No tabs in this group
+        </p>
       </div>
     );
   }
