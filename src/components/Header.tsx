@@ -7,7 +7,7 @@ const Header = () => (
       Tab Manager
     </h1>
     <p className="text-material-text-secondary text-sm mt-1">
-      Organize and copy your browser tabs
+      Organize and share your browser tabs
     </p>
   </div>
 );

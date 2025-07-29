@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import TabList from "./TabList";
 import { getGroupColor } from "../utils/colorUtils";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface TabGroupProps {
   group: chrome.tabGroups.TabGroup;
@@ -10,17 +11,21 @@ interface TabGroupProps {
 const TabGroup = ({ group }: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const toggleGroupTabs = async () => {
     if (isOpen) {
       setIsOpen(false);
     } else {
+      setLoading(true);
       try {
         const groupTabs = await chrome.tabs.query({ groupId: group.id });
         setTabs(groupTabs);
         setIsOpen(true);
       } catch (error) {
         console.error("Error loading tabs:", error);
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -59,7 +64,12 @@ const TabGroup = ({ group }: TabGroupProps) => {
           isOpen ? "max-h-96 mt-3" : "max-h-0"
         }`}
       >
-        {isOpen && <TabList tabs={tabs} groupId={group.id} />}
+        {isOpen &&
+          (loading ? (
+            <LoadingSpinner message="Loading tabs..." />
+          ) : (
+            <TabList tabs={tabs} groupId={group.id} />
+          ))}
       </div>
     </div>
   );
