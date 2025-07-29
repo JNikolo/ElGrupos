@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Folder, RefreshCw } from "lucide-react";
+import { Folder, RefreshCw, Plus } from "lucide-react";
 import Header from "./components/Header";
 import TabGroupList from "./components/TabGroupList";
 import NoGroupsMessage from "./components/NoGroupsMessage";
@@ -7,11 +7,15 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
 import Tooltip from "./components/Tooltip";
 import SearchComponent from "./components/SearchComponent";
+import GroupEditor from "./components/GroupEditor";
 
 function App() {
   const [tabGroups, setTabGroups] = useState<chrome.tabGroups.TabGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isGroupEditorOpen, setIsGroupEditorOpen] = useState(false);
+  const [editingGroup, setEditingGroup] =
+    useState<chrome.tabGroups.TabGroup | null>(null);
 
   const loadTabGroups = async () => {
     setLoading(true);
@@ -27,6 +31,23 @@ function App() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCreateGroup = () => {
+    setEditingGroup(null);
+    setIsGroupEditorOpen(true);
+  };
+
+  const handleGroupSave = (groupData: { title: string; color: string }) => {
+    // Group save functionality will be implemented later
+    console.log("Save group:", groupData);
+    setIsGroupEditorOpen(false);
+    setEditingGroup(null);
+  };
+
+  const handleGroupEditorClose = () => {
+    setIsGroupEditorOpen(false);
+    setEditingGroup(null);
   };
 
   useEffect(() => {
@@ -63,20 +84,31 @@ function App() {
                   {tabGroups.length}
                 </span>
               </h2>
-              <Tooltip content="Refresh tab groups">
-                <button
-                  onClick={loadTabGroups}
-                  disabled={loading}
-                  className={`px-3 py-1 bg-material-primary hover:bg-material-primary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1 ${
-                    loading ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                >
-                  <RefreshCw
-                    className={`w-3 h-3 ${loading ? "animate-spin" : ""}`}
-                  />
-                  Refresh
-                </button>
-              </Tooltip>
+              <div className="flex items-center gap-2">
+                <Tooltip content="Create new group">
+                  <button
+                    onClick={handleCreateGroup}
+                    className="px-3 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Create
+                  </button>
+                </Tooltip>
+                <Tooltip content="Refresh tab groups">
+                  <button
+                    onClick={loadTabGroups}
+                    disabled={loading}
+                    className={`px-3 py-1 bg-material-primary hover:bg-material-primary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1 ${
+                      loading ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                  >
+                    <RefreshCw
+                      className={`w-3 h-3 ${loading ? "animate-spin" : ""}`}
+                    />
+                    Refresh
+                  </button>
+                </Tooltip>
+              </div>
             </div>
 
             {loading ? (
@@ -91,6 +123,19 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Group Editor Modal */}
+      <GroupEditor
+        isOpen={isGroupEditorOpen}
+        onClose={handleGroupEditorClose}
+        onSave={handleGroupSave}
+        initialData={
+          editingGroup
+            ? { title: editingGroup.title || "", color: editingGroup.color }
+            : undefined
+        }
+        mode={editingGroup ? "edit" : "create"}
+      />
     </div>
   );
 }

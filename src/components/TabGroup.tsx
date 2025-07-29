@@ -3,6 +3,7 @@ import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
 import TabList from "./TabList";
 import { getGroupColor } from "../utils/colorUtils";
 import LoadingSpinner from "./LoadingSpinner";
+import GroupActions from "./GroupActions";
 
 interface TabGroupProps {
   group: chrome.tabGroups.TabGroup;
@@ -49,6 +50,33 @@ const TabGroup = ({ group }: TabGroupProps) => {
         <span className="font-medium text-material-text-primary text-sm flex-1 truncate">
           {group.title || "Untitled Group"}
         </span>
+
+        {/* Group Actions */}
+        <GroupActions
+          groupId={group.id}
+          groupTitle={group.title || "Untitled Group"}
+          onEdit={() => {
+            // Edit functionality will be implemented later
+            console.log("Edit group:", group.id);
+          }}
+          onDelete={() => {
+            // Delete functionality will be implemented later
+            console.log("Delete group:", group.id);
+          }}
+          onDuplicate={() => {
+            // Duplicate functionality will be implemented later
+            console.log("Duplicate group:", group.id);
+          }}
+          onArchive={() => {
+            // Archive functionality will be implemented later
+            console.log("Archive group:", group.id);
+          }}
+          onAddTab={() => {
+            // Add tab functionality will be implemented later
+            console.log("Add tab to group:", group.id);
+          }}
+        />
+
         <button
           onClick={toggleGroupTabs}
           className={`px-2 py-1 rounded-material-small text-xs font-medium transition-colors duration-[var(--animate-material-fast)] ${
