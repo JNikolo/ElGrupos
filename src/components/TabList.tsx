@@ -1,6 +1,7 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Share2 } from "lucide-react";
 import TabItem from "./TabItem";
 import CopyButton from "./CopyButton";
+import Tooltip from "./Tooltip";
 
 interface TabListProps {
   tabs: chrome.tabs.Tab[];
@@ -26,7 +27,19 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
 
   return (
     <>
-      <div className="flex justify-end mb-2">
+      <div className="flex justify-end items-center gap-2 mb-2">
+        <Tooltip content="Share all links in one URL">
+          <button
+            onClick={() => {
+              // Share functionality will be implemented later
+              console.log("Share all links:", allLinks);
+            }}
+            className="px-2 py-1 bg-material-info hover:bg-blue-600 text-material-text-primary rounded-material-small transition-colors duration-[var(--animate-material-fast)] text-xs font-medium flex items-center gap-1 shadow-material-1"
+          >
+            <Share2 className="w-3 h-3" />
+            Share
+          </button>
+        </Tooltip>
         <CopyButton textToCopy={allLinks} id={`group-${groupId}`} />
       </div>
       <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-custom">
