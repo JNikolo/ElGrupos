@@ -27,7 +27,7 @@ const GroupEditor = ({
   );
 
   const colors = [
-    { name: "grey", class: "bg-slate-400", label: "Grey" },
+    { name: "grey", class: "bg-gray-500", label: "Grey" },
     { name: "blue", class: "bg-blue-500", label: "Blue" },
     { name: "red", class: "bg-red-500", label: "Red" },
     { name: "yellow", class: "bg-yellow-500", label: "Yellow" },
