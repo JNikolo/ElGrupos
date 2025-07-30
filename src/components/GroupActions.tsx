@@ -35,7 +35,7 @@ const GroupActions = ({
     },
     {
       icon: Plus,
-      label: "Add Tab",
+      label: "Add Current Tab",
       onClick: () => {
         onAddTab();
         setIsOpen(false);

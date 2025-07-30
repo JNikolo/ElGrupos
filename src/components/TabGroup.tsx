@@ -10,9 +10,16 @@ interface TabGroupProps {
   onEdit?: (group: chrome.tabGroups.TabGroup) => void;
   onDelete?: (groupId: number) => void;
   onUngroup?: (groupId: number) => void;
+  onAddTab?: (groupId: number) => void;
 }
 
-const TabGroup = ({ group, onEdit, onDelete, onUngroup }: TabGroupProps) => {
+const TabGroup = ({
+  group,
+  onEdit,
+  onDelete,
+  onUngroup,
+  onAddTab,
+}: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,8 +79,7 @@ const TabGroup = ({ group, onEdit, onDelete, onUngroup }: TabGroupProps) => {
             onUngroup?.(group.id);
           }}
           onAddTab={() => {
-            // Add tab functionality will be implemented later
-            console.log("Add tab to group:", group.id);
+            onAddTab?.(group.id);
           }}
         />
 

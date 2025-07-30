@@ -47,19 +47,21 @@ function App() {
     try {
       // Get all tabs in the group first
       const tabs = await chrome.tabs.query({ groupId });
-      
+
       // Remove tabs from the group (ungroup them first)
-      const tabIds = tabs.map(tab => tab.id).filter((id): id is number => id !== undefined);
+      const tabIds = tabs
+        .map((tab) => tab.id)
+        .filter((id): id is number => id !== undefined);
       if (tabIds.length > 0) {
         // Chrome expects individual tab IDs or spread array, so we'll process one by one
         for (const tabId of tabIds) {
           await chrome.tabs.ungroup(tabId);
         }
       }
-      
+
       // Note: Chrome automatically removes empty groups, so no need to explicitly delete
       console.log("Deleted group:", groupId);
-      
+
       // Refresh the groups list
       await loadTabGroups();
     } catch (error) {
@@ -72,23 +74,63 @@ function App() {
     try {
       // Get all tabs in the group
       const tabs = await chrome.tabs.query({ groupId });
-      
+
       // Remove all tabs from the group
-      const tabIds = tabs.map(tab => tab.id).filter((id): id is number => id !== undefined);
+      const tabIds = tabs
+        .map((tab) => tab.id)
+        .filter((id): id is number => id !== undefined);
       if (tabIds.length > 0) {
         // Chrome expects individual tab IDs or spread array, so we'll process one by one
         for (const tabId of tabIds) {
           await chrome.tabs.ungroup(tabId);
         }
       }
-      
+
       console.log("Ungrouped tabs from group:", groupId);
-      
+
       // Refresh the groups list
       await loadTabGroups();
     } catch (error) {
       console.error("Error ungrouping tabs:", error);
       setError("Failed to ungroup tabs");
+    }
+  };
+
+  const handleAddTab = async (groupId: number) => {
+    try {
+      // Get the current active tab
+      const activeTabs = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      if (activeTabs.length > 0 && activeTabs[0].id !== undefined) {
+        const activeTab = activeTabs[0];
+
+        // Check if the tab is already in a group
+        if (activeTab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
+          throw new Error(
+            "Active tab is already in a group. Please ungroup it first or select a different tab."
+          );
+        }
+
+        // Add the active tab to the group
+        await chrome.tabs.group({
+          tabIds: [activeTab.id!],
+          groupId: groupId,
+        });
+
+        console.log("Added tab to group:", groupId);
+
+        // Refresh the groups list
+        await loadTabGroups();
+      } else {
+        throw new Error("No active tab found to add to group");
+      }
+    } catch (error) {
+      console.error("Error adding tab to group:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to add tab to group";
+      setError(errorMessage);
     }
   };
 
@@ -115,9 +157,14 @@ function App() {
         console.log("Updated group:", editingGroup.id, groupData);
       } else {
         // Create new group with current active tab
-        const activeTabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const activeTabs = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
         if (activeTabs.length > 0 && activeTabs[0].id) {
-          const groupId = await chrome.tabs.group({ tabIds: [activeTabs[0].id] });
+          const groupId = await chrome.tabs.group({
+            tabIds: [activeTabs[0].id],
+          });
           await chrome.tabGroups.update(groupId, {
             title: groupData.title,
             color: groupData.color as
@@ -225,6 +272,7 @@ function App() {
                 onEditGroup={handleEditGroup}
                 onDeleteGroup={handleDeleteGroup}
                 onUngroupTabs={handleUngroupTabs}
+                onAddTab={handleAddTab}
               />
             )}
           </div>
