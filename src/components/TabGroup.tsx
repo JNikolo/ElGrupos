@@ -11,6 +11,7 @@ interface TabGroupProps {
   onDelete?: (groupId: number) => void;
   onUngroup?: (groupId: number) => void;
   onAddTab?: (groupId: number) => void;
+  onDuplicate?: (groupId: number) => void;
 }
 
 const TabGroup = ({
@@ -19,6 +20,7 @@ const TabGroup = ({
   onDelete,
   onUngroup,
   onAddTab,
+  onDuplicate,
 }: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
@@ -72,8 +74,7 @@ const TabGroup = ({
             onDelete?.(group.id);
           }}
           onDuplicate={() => {
-            // Duplicate functionality will be implemented later
-            console.log("Duplicate group:", group.id);
+            onDuplicate?.(group.id);
           }}
           onUngroup={() => {
             onUngroup?.(group.id);

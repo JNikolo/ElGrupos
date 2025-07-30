@@ -134,6 +134,58 @@ function App() {
     }
   };
 
+  const handleDuplicateGroup = async (groupId: number) => {
+    try {
+      // Get the group details
+      const group = await chrome.tabGroups.get(groupId);
+      if (!group) {
+        throw new Error("Group not found");
+      }
+
+      // Get all tabs in the original group
+      const tabs = await chrome.tabs.query({ groupId });
+      
+      if (tabs.length === 0) {
+        throw new Error("No tabs found in group to duplicate");
+      }
+
+      // Create new tabs by duplicating each tab in the group
+      const newTabIds: number[] = [];
+      for (const tab of tabs) {
+        if (tab.id !== undefined) {
+          const duplicatedTab = await chrome.tabs.duplicate(tab.id);
+          if (duplicatedTab && duplicatedTab.id !== undefined) {
+            newTabIds.push(duplicatedTab.id);
+          }
+        }
+      }
+
+      if (newTabIds.length === 0) {
+        throw new Error("Failed to duplicate any tabs");
+      }
+
+      // Create a new group with the duplicated tabs
+      const newGroupId = await chrome.tabs.group({
+        tabIds: newTabIds.length === 1 ? newTabIds[0] : (newTabIds as [number, ...number[]]),
+      });
+
+      // Update the new group with the same title and color as the original
+      await chrome.tabGroups.update(newGroupId, {
+        title: group.title ? `${group.title} (Copy)` : "Untitled Group (Copy)",
+        color: group.color,
+      });
+
+      console.log("Duplicated group:", groupId, "to", newGroupId);
+
+      // Refresh the groups list
+      await loadTabGroups();
+    } catch (error) {
+      console.error("Error duplicating group:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to duplicate group";
+      setError(errorMessage);
+    }
+  };
+
   const handleGroupSave = async (groupData: {
     title: string;
     color: string;
@@ -273,6 +325,7 @@ function App() {
                 onDeleteGroup={handleDeleteGroup}
                 onUngroupTabs={handleUngroupTabs}
                 onAddTab={handleAddTab}
+                onDuplicate={handleDuplicateGroup}
               />
             )}
           </div>

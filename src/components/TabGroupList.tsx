@@ -6,6 +6,7 @@ interface TabGroupListProps {
   onDeleteGroup?: (groupId: number) => void;
   onUngroupTabs?: (groupId: number) => void;
   onAddTab?: (groupId: number) => void;
+  onDuplicate?: (groupId: number) => void;
 }
 
 const TabGroupList = ({
@@ -14,6 +15,7 @@ const TabGroupList = ({
   onDeleteGroup,
   onUngroupTabs,
   onAddTab,
+  onDuplicate,
 }: TabGroupListProps) => (
   <div className="space-y-2">
     {tabGroups.map((group) => (
@@ -24,6 +26,7 @@ const TabGroupList = ({
         onDelete={onDeleteGroup}
         onUngroup={onUngroupTabs}
         onAddTab={onAddTab}
+        onDuplicate={onDuplicate}
       />
     ))}
   </div>
