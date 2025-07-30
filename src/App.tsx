@@ -26,6 +26,7 @@ import ErrorMessage from "./components/ErrorMessage";
 import Tooltip from "./components/Tooltip";
 import SearchComponent from "./components/SearchComponent";
 import GroupEditor from "./components/GroupEditor";
+import { reorderTabGroups, getSortedTabGroups } from "./utils/tabUtils";
 
 function App() {
   const [tabGroups, setTabGroups] = useState<chrome.tabGroups.TabGroup[]>([]);
@@ -36,6 +37,7 @@ function App() {
     useState<chrome.tabGroups.TabGroup | null>(null);
   const [activeGroup, setActiveGroup] =
     useState<chrome.tabGroups.TabGroup | null>(null);
+  const [isReorderingGroups, setIsReorderingGroups] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -50,16 +52,35 @@ function App() {
     setActiveGroup(group || null);
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setTabGroups((groups) => {
-        const oldIndex = groups.findIndex((group) => group.id === active.id);
-        const newIndex = groups.findIndex((group) => group.id === over.id);
+      const oldIndex = tabGroups.findIndex((group) => group.id === active.id);
+      const newIndex = tabGroups.findIndex((group) => group.id === over.id);
 
-        return arrayMove(groups, oldIndex, newIndex);
-      });
+      if (oldIndex !== -1 && newIndex !== -1) {
+        // Optimistically update the UI
+        const newGroups = arrayMove(tabGroups, oldIndex, newIndex);
+        setTabGroups(newGroups);
+        setIsReorderingGroups(true);
+
+        try {
+          // Update Chrome tab group order
+          const updatedGroups = await reorderTabGroups(
+            tabGroups,
+            oldIndex,
+            newIndex
+          );
+          setTabGroups(updatedGroups);
+        } catch (error) {
+          console.error("Failed to reorder tab groups:", error);
+          // Revert to original order on error
+          setTabGroups(tabGroups);
+        } finally {
+          setIsReorderingGroups(false);
+        }
+      }
     }
 
     setActiveGroup(null);
@@ -69,7 +90,7 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const groups = await chrome.tabGroups.query({});
+      const groups = await getSortedTabGroups();
       setTabGroups(groups);
     } catch (error) {
       console.error("Error loading tab groups:", error);
@@ -176,7 +197,10 @@ function App() {
                   items={tabGroups.map((group) => group.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <TabGroupList tabGroups={tabGroups} />
+                  <TabGroupList
+                    tabGroups={tabGroups}
+                    isReordering={isReorderingGroups}
+                  />
                 </SortableContext>
                 <DragOverlay>
                   {activeGroup ? <TabGroup group={activeGroup} /> : null}

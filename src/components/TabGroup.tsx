@@ -9,9 +9,10 @@ import GroupActions from "./GroupActions";
 
 interface TabGroupProps {
   group: chrome.tabGroups.TabGroup;
+  isReordering?: boolean;
 }
 
-const TabGroup = ({ group }: TabGroupProps) => {
+const TabGroup = ({ group, isReordering = false }: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,10 @@ const TabGroup = ({ group }: TabGroupProps) => {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+  };
+
+  const handleTabsReorder = (newTabs: chrome.tabs.Tab[]) => {
+    setTabs(newTabs);
   };
 
   const toggleGroupTabs = async () => {
@@ -63,8 +68,13 @@ const TabGroup = ({ group }: TabGroupProps) => {
         <button
           {...attributes}
           {...listeners}
-          className="p-1 hover:rounded-material-small hover:bg-material-elevated text-material-text-secondary hover:text-material-text-primary cursor-grab active:cursor-grabbing transition-all duration-[var(--animate-material-fast)] hover:shadow-material-2"
-          title="Drag to reorder"
+          disabled={isReordering}
+          className={`p-1 hover:rounded-material-small hover:bg-material-elevated text-material-text-secondary hover:text-material-text-primary transition-all duration-[var(--animate-material-fast)] hover:shadow-material-2 ${
+            isReordering
+              ? "cursor-wait opacity-50"
+              : "cursor-grab active:cursor-grabbing"
+          }`}
+          title={isReordering ? "Reordering groups..." : "Drag to reorder"}
         >
           <GripVertical className="w-4 h-4" />
         </button>
@@ -124,7 +134,11 @@ const TabGroup = ({ group }: TabGroupProps) => {
           (loading ? (
             <LoadingSpinner message="Loading tabs..." />
           ) : (
-            <TabList tabs={tabs} groupId={group.id} />
+            <TabList
+              tabs={tabs}
+              groupId={group.id}
+              onTabsReorder={handleTabsReorder}
+            />
           ))}
       </div>
     </div>
