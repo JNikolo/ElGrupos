@@ -7,9 +7,10 @@ import GroupActions from "./GroupActions";
 
 interface TabGroupProps {
   group: chrome.tabGroups.TabGroup;
+  onEdit?: (group: chrome.tabGroups.TabGroup) => void;
 }
 
-const TabGroup = ({ group }: TabGroupProps) => {
+const TabGroup = ({ group, onEdit }: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [loading, setLoading] = useState(false);
@@ -56,8 +57,7 @@ const TabGroup = ({ group }: TabGroupProps) => {
           groupId={group.id}
           groupTitle={group.title || "Untitled Group"}
           onEdit={() => {
-            // Edit functionality will be implemented later
-            console.log("Edit group:", group.id);
+            onEdit?.(group);
           }}
           onDelete={() => {
             // Delete functionality will be implemented later

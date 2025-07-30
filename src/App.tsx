@@ -38,11 +38,45 @@ function App() {
     setIsGroupEditorOpen(true);
   };
 
-  const handleGroupSave = (groupData: { title: string; color: string }) => {
-    // Group save functionality will be implemented later
-    console.log("Save group:", groupData);
-    setIsGroupEditorOpen(false);
-    setEditingGroup(null);
+  const handleEditGroup = (group: chrome.tabGroups.TabGroup) => {
+    setEditingGroup(group);
+    setIsGroupEditorOpen(true);
+  };
+
+  const handleGroupSave = async (groupData: {
+    title: string;
+    color: string;
+  }) => {
+    try {
+      if (editingGroup) {
+        // Update existing group
+        await chrome.tabGroups.update(editingGroup.id, {
+          title: groupData.title,
+          color: groupData.color as
+            | "blue"
+            | "cyan"
+            | "green"
+            | "grey"
+            | "orange"
+            | "pink"
+            | "purple"
+            | "red"
+            | "yellow",
+        });
+        console.log("Updated group:", editingGroup.id, groupData);
+      } else {
+        // Create new group functionality will be implemented later
+        console.log("Create new group:", groupData);
+      }
+
+      // Refresh the groups list to show updated data
+      await loadTabGroups();
+    } catch (error) {
+      console.error("Error saving group:", error);
+    } finally {
+      setIsGroupEditorOpen(false);
+      setEditingGroup(null);
+    }
   };
 
   const handleGroupEditorClose = () => {
@@ -118,7 +152,10 @@ function App() {
             ) : tabGroups.length === 0 ? (
               <NoGroupsMessage />
             ) : (
-              <TabGroupList tabGroups={tabGroups} />
+              <TabGroupList
+                tabGroups={tabGroups}
+                onEditGroup={handleEditGroup}
+              />
             )}
           </div>
         </div>
