@@ -8,9 +8,11 @@ import GroupActions from "./GroupActions";
 interface TabGroupProps {
   group: chrome.tabGroups.TabGroup;
   onEdit?: (group: chrome.tabGroups.TabGroup) => void;
+  onDelete?: (groupId: number) => void;
+  onUngroup?: (groupId: number) => void;
 }
 
-const TabGroup = ({ group, onEdit }: TabGroupProps) => {
+const TabGroup = ({ group, onEdit, onDelete, onUngroup }: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
   const [loading, setLoading] = useState(false);
@@ -60,16 +62,14 @@ const TabGroup = ({ group, onEdit }: TabGroupProps) => {
             onEdit?.(group);
           }}
           onDelete={() => {
-            // Delete functionality will be implemented later
-            console.log("Delete group:", group.id);
+            onDelete?.(group.id);
           }}
           onDuplicate={() => {
             // Duplicate functionality will be implemented later
             console.log("Duplicate group:", group.id);
           }}
-          onArchive={() => {
-            // Archive functionality will be implemented later
-            console.log("Archive group:", group.id);
+          onUngroup={() => {
+            onUngroup?.(group.id);
           }}
           onAddTab={() => {
             // Add tab functionality will be implemented later
