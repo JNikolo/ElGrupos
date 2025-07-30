@@ -1,24 +1,110 @@
 /**
- * Utility functions for Chrome tab operations
+ * Utility functions for Chrome tab and tab group operations
  */
 
+/** ---------- Small helpers ---------- */
+
+const sortTabsByIndex = (tabs: chrome.tabs.Tab[]) =>
+  tabs.sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+
 /**
- * Move a tab to a new position within its group
+ * Clamp a number to an inclusive range.
+ */
+const clamp = (n: number, min: number, max: number) =>
+  Math.max(min, Math.min(max, n));
+
+/**
+ * Get all groups in a window, sorted by their visual order.
+ * We infer group order by the index of the group's first tab.
+ */
+const getGroupsInWindowSorted = async (
+  windowId: number
+): Promise<chrome.tabGroups.TabGroup[]> => {
+  const groups = await chrome.tabGroups.query({ windowId });
+
+  if (groups.length === 0) return groups;
+
+  const withPos = await Promise.all(
+    groups.map(async (group) => {
+      const tabs = await chrome.tabs.query({ groupId: group.id, windowId });
+      const firstIndex = tabs.length
+        ? Math.min(...tabs.map((t) => t.index ?? 0))
+        : Number.POSITIVE_INFINITY;
+      return { group, firstIndex };
+    })
+  );
+
+  withPos.sort((a, b) => a.firstIndex - b.firstIndex);
+  return withPos.map((x) => x.group);
+};
+
+/** ---------- Tab-level utilities ---------- */
+
+/**
+ * Move a tab to a new position within its group (UPDATED SIGNATURE)
+ * - Keeps the tab inside the group even when moving to the end.
+ * - Fixes the "jump one extra" bug on downward moves.
  */
 export const moveTabInGroup = async (
   tabId: number,
-  newIndex: number
+  groupId: number,
+  newGroupIndex: number
 ): Promise<void> => {
   try {
-    await chrome.tabs.move(tabId, { index: newIndex });
+    // Get tabs in the target group (sorted)
+    let groupTabs = await chrome.tabs.query({ groupId });
+    groupTabs = sortTabsByIndex(groupTabs);
+
+    if (groupTabs.length === 0) {
+      throw new Error("Group has no tabs.");
+    }
+
+    // Find the tab and its current position within the group
+    const currentInGroupIdx = groupTabs.findIndex((t) => t.id === tabId);
+    if (currentInGroupIdx === -1) {
+      throw new Error("Tab is not in the specified group.");
+    }
+
+    // Normalize the target index
+    const targetInGroupIdx = clamp(newGroupIndex, 0, groupTabs.length - 1);
+    if (currentInGroupIdx === targetInGroupIdx) return;
+
+    const tabToMove = groupTabs[currentInGroupIdx];
+    if (!tabToMove.id) throw new Error("Tab ID is undefined");
+
+    // Determine the destination absolute index
+    const movingDown = currentInGroupIdx < targetInGroupIdx;
+
+    let destinationIndex: number;
+    if (movingDown) {
+      if (targetInGroupIdx === groupTabs.length - 1) {
+        // To the very end: place AFTER the last tab of the group
+        destinationIndex = (groupTabs[targetInGroupIdx].index ?? 0) + 1;
+      } else {
+        // Middle downward move: insert BEFORE the target
+        destinationIndex = groupTabs[targetInGroupIdx].index ?? 0;
+      }
+    } else {
+      // Moving up: insert BEFORE the target
+      destinationIndex = groupTabs[targetInGroupIdx].index ?? 0;
+    }
+
+    // Move the tab
+    await chrome.tabs.move(tabToMove.id, { index: destinationIndex });
+
+    // Ensure the tab remains in the group (Chrome may pop it out when dropping after the last tab).
+    const moved = await chrome.tabs.get(tabToMove.id);
+    if (moved.groupId !== groupId) {
+      await chrome.tabs.group({ groupId, tabIds: tabToMove.id });
+    }
   } catch (error) {
-    console.error("Error moving tab:", error);
+    console.error("Error moving tab within group:", error);
     throw error;
   }
 };
 
 /**
- * Get the current index of a tab within its group
+ * Get the current index of a tab within its group (0-based in the group order).
  */
 export const getTabIndexInGroup = (
   tabs: chrome.tabs.Tab[],
@@ -28,7 +114,10 @@ export const getTabIndexInGroup = (
 };
 
 /**
- * Reorder tabs within a group
+ * Reorder tabs within a group (refactored)
+ * - Uses absolute tab indices directly
+ * - Works correctly when moving up or down (no extra jump)
+ * - Keeps the tab in the group after the move
  */
 export const reorderTabsInGroup = async (
   groupId: number,
@@ -36,49 +125,65 @@ export const reorderTabsInGroup = async (
   newIndex: number
 ): Promise<chrome.tabs.Tab[]> => {
   try {
-    // Get all tabs in the group
-    const groupTabs = await chrome.tabs.query({ groupId });
+    // Get all tabs in the group and ensure visual order
+    let groupTabs = await chrome.tabs.query({ groupId });
+    groupTabs = sortTabsByIndex(groupTabs);
 
     if (
+      groupTabs.length === 0 ||
       oldIndex < 0 ||
-      oldIndex >= groupTabs.length ||
       newIndex < 0 ||
-      newIndex >= groupTabs.length
+      oldIndex >= groupTabs.length ||
+      newIndex >= groupTabs.length ||
+      oldIndex === newIndex
     ) {
-      throw new Error("Invalid tab indices");
+      return groupTabs;
     }
 
     const tabToMove = groupTabs[oldIndex];
-    if (!tabToMove.id) {
-      throw new Error("Tab ID is undefined");
+    if (!tabToMove.id) throw new Error("Tab ID is undefined");
+
+    const movingDown = oldIndex < newIndex;
+
+    let destinationIndex: number;
+    if (movingDown) {
+      if (newIndex === groupTabs.length - 1) {
+        // To the very end: place AFTER the last tab of the group
+        destinationIndex = (groupTabs[newIndex].index ?? 0) + 1;
+      } else {
+        // Middle downward move: insert BEFORE the target
+        destinationIndex = groupTabs[newIndex].index ?? 0;
+      }
+    } else {
+      // Moving up: insert BEFORE the target
+      destinationIndex = groupTabs[newIndex].index ?? 0;
     }
-
-    // Calculate the new absolute index
-    // We need to find the absolute position considering all tabs in the window
-    const allTabs = await chrome.tabs.query({ windowId: tabToMove.windowId });
-    const groupStartIndex = allTabs.findIndex(
-      (tab) => tab.id === groupTabs[0].id
-    );
-
-    if (groupStartIndex === -1) {
-      throw new Error("Could not find group start position");
-    }
-
-    const newAbsoluteIndex = groupStartIndex + newIndex;
 
     // Move the tab
-    await chrome.tabs.move(tabToMove.id, { index: newAbsoluteIndex });
+    await chrome.tabs.move(tabToMove.id, { index: destinationIndex });
 
-    // Return updated tab list
-    return await chrome.tabs.query({ groupId });
+    // Keep it grouped if Chrome popped it out (can happen when dropping "after" the last tab)
+    const moved = await chrome.tabs.get(tabToMove.id);
+    if (moved.groupId !== groupId) {
+      await chrome.tabs.group({ groupId, tabIds: tabToMove.id });
+    }
+
+    // Return fresh, updated list for the group
+    let updated = await chrome.tabs.query({ groupId });
+    updated = sortTabsByIndex(updated);
+    return updated;
   } catch (error) {
     console.error("Error reordering tabs:", error);
     throw error;
   }
 };
 
+/** ---------- Group-level utilities ---------- */
+
 /**
- * Reorder tab groups by moving all tabs in the groups
+ * Reorder tab groups using the Chrome Tab Groups API
+ * - Uses group order indices (not tab indices)
+ * - No -1 (not valid for tabGroups.move)
  */
 export const reorderTabGroups = async (
   groups: chrome.tabGroups.TabGroup[],
@@ -96,69 +201,34 @@ export const reorderTabGroups = async (
       return groups;
     }
 
+    // Identify the group to move and its window
     const groupToMove = groups[oldIndex];
+    const windowId = groupToMove.windowId;
+    if (windowId === undefined) throw new Error("Group has no windowId.");
 
-    // Get all tabs for the group being moved
-    const groupTabs = await chrome.tabs.query({ groupId: groupToMove.id });
+    // Get the authoritative, *sorted* list of groups for that window
+    const currentGroups = await getGroupsInWindowSorted(windowId);
 
-    if (groupTabs.length === 0) {
-      throw new Error("No tabs found in the group to move");
+    // Map the moving group to its current position in the sorted list
+    const currentPos = currentGroups.findIndex((g) => g.id === groupToMove.id);
+    if (currentPos === -1) {
+      throw new Error(
+        "Could not locate the group to move in the current window."
+      );
     }
 
-    // Determine the target position
-    let targetIndex: number;
+    // Clamp desired position to a valid range (defensive)
+    const desiredPos = clamp(newIndex, 0, currentGroups.length - 1);
 
-    if (newIndex === 0) {
-      // Moving to the beginning
-      targetIndex = 0;
-    } else if (newIndex >= groups.length - 1) {
-      // Moving to the end - get all tabs and move to the end
-      const allTabs = await chrome.tabs.query({
-        windowId: groupTabs[0].windowId,
-      });
-      targetIndex = allTabs.length;
-    } else {
-      // Moving to a position between other groups
-      const targetGroup = groups[newIndex];
-      const targetGroupTabs = await chrome.tabs.query({
-        groupId: targetGroup.id,
-      });
-
-      if (targetGroupTabs.length === 0) {
-        throw new Error("Target group has no tabs");
-      }
-
-      // Get all tabs in the window to find the absolute position
-      const allTabs = await chrome.tabs.query({
-        windowId: groupTabs[0].windowId,
-      });
-
-      if (oldIndex < newIndex) {
-        // Moving forward - place after the target group
-        const targetGroupEndIndex = allTabs.findIndex(
-          (tab) => tab.id === targetGroupTabs[targetGroupTabs.length - 1].id
-        );
-        targetIndex = targetGroupEndIndex + 1;
-      } else {
-        // Moving backward - place before the target group
-        const targetGroupStartIndex = allTabs.findIndex(
-          (tab) => tab.id === targetGroupTabs[0].id
-        );
-        targetIndex = targetGroupStartIndex;
-      }
+    if (currentPos === desiredPos) {
+      return currentGroups;
     }
 
-    // Move all tabs in the group to the new position
-    const tabIds = groupTabs
-      .map((tab) => tab.id)
-      .filter((id): id is number => id !== undefined);
+    // Move the group to the desired group-index (final position among groups)
+    await chrome.tabGroups.move(groupToMove.id, { index: desiredPos });
 
-    if (tabIds.length > 0) {
-      await chrome.tabs.move(tabIds, { index: targetIndex });
-    }
-
-    // Return updated groups list sorted by their actual position
-    return await getSortedTabGroups();
+    // Return the updated, correctly sorted groups
+    return await getGroupsInWindowSorted(windowId);
   } catch (error) {
     console.error("Error reordering tab groups:", error);
     throw error;
@@ -166,33 +236,32 @@ export const reorderTabGroups = async (
 };
 
 /**
- * Get tab groups sorted by their actual position in the browser
+ * Get tab groups sorted by their actual position in the browser.
+ * - Aggregates per-window results from getGroupsInWindowSorted
  */
 export const getSortedTabGroups = async (): Promise<
   chrome.tabGroups.TabGroup[]
 > => {
   try {
-    const groups = await chrome.tabGroups.query({});
+    const allGroups = await chrome.tabGroups.query({});
+    if (allGroups.length === 0) return allGroups;
 
-    if (groups.length === 0) {
-      return groups;
+    // Bucket groups by windowId
+    const byWindow = new Map<number, chrome.tabGroups.TabGroup[]>();
+    for (const g of allGroups) {
+      if (g.windowId === undefined) continue;
+      if (!byWindow.has(g.windowId)) byWindow.set(g.windowId, []);
+      byWindow.get(g.windowId)!.push(g);
     }
 
-    // Get all tabs for each group to determine their positions
-    const groupsWithPosition = await Promise.all(
-      groups.map(async (group) => {
-        const groupTabs = await chrome.tabs.query({ groupId: group.id });
-        // Use the index of the first tab in the group as the group's position
-        const firstTabIndex =
-          groupTabs.length > 0 ? groupTabs[0].index : Infinity;
-        return { group, position: firstTabIndex };
-      })
-    );
-
-    // Sort groups by the position of their first tab
-    groupsWithPosition.sort((a, b) => a.position - b.position);
-
-    return groupsWithPosition.map((item) => item.group);
+    // For each window, sort by first tab's index; then flatten in window order
+    const windows = Array.from(byWindow.keys()).sort((a, b) => a - b);
+    const result: chrome.tabGroups.TabGroup[] = [];
+    for (const winId of windows) {
+      const sorted = await getGroupsInWindowSorted(winId);
+      result.push(...sorted);
+    }
+    return result;
   } catch (error) {
     console.error("Error getting sorted tab groups:", error);
     throw error;
