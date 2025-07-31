@@ -108,10 +108,8 @@ function App() {
         .map((tab) => tab.id)
         .filter((id): id is number => id !== undefined);
       if (tabIds.length > 0) {
-        // Chrome expects individual tab IDs or spread array, so we'll process one by one
-        for (const tabId of tabIds) {
-          await chrome.tabs.ungroup(tabId);
-        }
+        // Ungroup all tabs at once for better performance
+        await chrome.tabs.ungroup(tabIds);
       }
 
       console.log("Ungrouped tabs from group:", groupId);
