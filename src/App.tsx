@@ -305,7 +305,7 @@ function App() {
       chrome.tabs.onCreated.removeListener(refresh);
 
       chrome.tabGroups.onCreated.removeListener(refresh);
-      chrome.tabGroups.onMoved?.removeListener?.(refresh);
+      chrome.tabGroups.onMoved?.removeListener(refresh);
       chrome.tabGroups.onRemoved.removeListener(refresh);
       chrome.tabGroups.onUpdated.removeListener(refresh);
     };
