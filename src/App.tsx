@@ -82,9 +82,10 @@ function App() {
       const tabIds = tabs
         .map((tab) => tab.id)
         .filter((id): id is number => id !== undefined);
-      if (tabIds.length > 0) {
-        // Ungroup all tabs at once using the array of tab IDs
-        await chrome.tabs.ungroup(tabIds);
+      if (tabIds.length === 1) {
+        await chrome.tabs.ungroup(tabIds[0]);
+      } else if (tabIds.length > 1) {
+        await chrome.tabs.ungroup(tabIds as [number, ...number[]]);
       }
 
       // Note: Chrome automatically removes empty groups, so no need to explicitly delete
@@ -107,9 +108,11 @@ function App() {
       const tabIds = tabs
         .map((tab) => tab.id)
         .filter((id): id is number => id !== undefined);
-      if (tabIds.length > 0) {
-        // Ungroup all tabs at once for better performance
-        await chrome.tabs.ungroup(tabIds);
+
+      if (tabIds.length === 1) {
+        await chrome.tabs.ungroup(tabIds[0]);
+      } else if (tabIds.length > 1) {
+        await chrome.tabs.ungroup(tabIds as [number, ...number[]]);
       }
 
       console.log("Ungrouped tabs from group:", groupId);
@@ -192,7 +195,7 @@ function App() {
 
       // Create a new group with the duplicated tabs
       const newGroupId = await chrome.tabs.group({
-        tabIds: newTabIds,
+        tabIds: newTabIds as [number, ...number[]],
       });
 
       // Update the new group with the same title and color as the original
