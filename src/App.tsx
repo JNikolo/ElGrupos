@@ -192,10 +192,7 @@ function App() {
 
       // Create a new group with the duplicated tabs
       const newGroupId = await chrome.tabs.group({
-        tabIds:
-          newTabIds.length === 1
-            ? newTabIds[0]
-            : (newTabIds as [number, ...number[]]),
+        tabIds: newTabIds,
       });
 
       // Update the new group with the same title and color as the original
