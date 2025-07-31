@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Save, X, Edit3, Palette } from "lucide-react";
 
 interface GroupEditorProps {
@@ -25,6 +25,12 @@ const GroupEditor = ({
   const [selectedColor, setSelectedColor] = useState(
     initialData?.color || "grey"
   );
+
+  // Update state when initialData changes (when switching between groups)
+  useEffect(() => {
+    setTitle(initialData?.title || "");
+    setSelectedColor(initialData?.color || "grey");
+  }, [initialData]);
 
   const colors = [
     { name: "grey", class: "bg-gray-500", label: "Grey" },

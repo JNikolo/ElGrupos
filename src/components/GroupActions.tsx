@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Edit3, Trash2, Plus, Copy, Archive } from "lucide-react";
+import { MoreVertical, Edit3, Trash2, Plus, Copy, Ungroup } from "lucide-react";
 import Tooltip from "./Tooltip";
 
 interface GroupActionsProps {
@@ -8,7 +8,7 @@ interface GroupActionsProps {
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
-  onArchive: () => void;
+  onUngroup: () => void;
   onAddTab: () => void;
 }
 
@@ -18,7 +18,7 @@ const GroupActions = ({
   onEdit,
   onDelete,
   onDuplicate,
-  onArchive,
+  onUngroup,
   onAddTab,
 }: GroupActionsProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +35,7 @@ const GroupActions = ({
     },
     {
       icon: Plus,
-      label: "Add Tab",
+      label: "Add Current Tab",
       onClick: () => {
         onAddTab();
         setIsOpen(false);
@@ -52,10 +52,10 @@ const GroupActions = ({
       variant: "default" as const,
     },
     {
-      icon: Archive,
-      label: "Archive Group",
+      icon: Ungroup,
+      label: "Ungroup Tabs",
       onClick: () => {
-        onArchive();
+        onUngroup();
         setIsOpen(false);
       },
       variant: "warning" as const,
