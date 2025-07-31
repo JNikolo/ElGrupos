@@ -21,8 +21,38 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const groups = await chrome.tabGroups.query({});
-      setTabGroups(groups);
+      // Use the current window so the order matches what the user sees
+      const currentWindow = await chrome.windows.getCurrent();
+
+      // Get all groups and all tabs for this window in parallel
+      const [groups, tabs] = await Promise.all([
+        chrome.tabGroups.query({ windowId: currentWindow.id }),
+        chrome.tabs.query({ windowId: currentWindow.id }),
+      ]);
+
+      // Build a map: groupId -> leftmost tab index
+      const leftmostIndexByGroup = new Map<number, number>();
+      for (const tab of tabs) {
+        if (
+          tab.groupId !== undefined &&
+          tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE &&
+          typeof tab.index === "number"
+        ) {
+          const existing = leftmostIndexByGroup.get(tab.groupId);
+          if (existing === undefined || tab.index < existing) {
+            leftmostIndexByGroup.set(tab.groupId, tab.index);
+          }
+        }
+      }
+
+      // Sort groups by the leftmost tab index
+      const sorted = [...groups].sort((a, b) => {
+        const ai = leftmostIndexByGroup.get(a.id) ?? Number.MAX_SAFE_INTEGER;
+        const bi = leftmostIndexByGroup.get(b.id) ?? Number.MAX_SAFE_INTEGER;
+        return ai - bi;
+      });
+
+      setTabGroups(sorted);
     } catch (error) {
       console.error("Error loading tab groups:", error);
       setError(
@@ -144,7 +174,7 @@ function App() {
 
       // Get all tabs in the original group
       const tabs = await chrome.tabs.query({ groupId });
-      
+
       if (tabs.length === 0) {
         throw new Error("No tabs found in group to duplicate");
       }
@@ -166,7 +196,10 @@ function App() {
 
       // Create a new group with the duplicated tabs
       const newGroupId = await chrome.tabs.group({
-        tabIds: newTabIds.length === 1 ? newTabIds[0] : (newTabIds as [number, ...number[]]),
+        tabIds:
+          newTabIds.length === 1
+            ? newTabIds[0]
+            : (newTabIds as [number, ...number[]]),
       });
 
       // Update the new group with the same title and color as the original
@@ -181,7 +214,8 @@ function App() {
       await loadTabGroups();
     } catch (error) {
       console.error("Error duplicating group:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to duplicate group";
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to duplicate group";
       setError(errorMessage);
     }
   };
@@ -253,6 +287,35 @@ function App() {
 
   useEffect(() => {
     loadTabGroups();
+
+    const refresh = () => loadTabGroups();
+
+    // Tabs moving between/within groups changes group order
+    chrome.tabs.onMoved.addListener(refresh);
+    chrome.tabs.onAttached.addListener(refresh);
+    chrome.tabs.onDetached.addListener(refresh);
+    chrome.tabs.onRemoved.addListener(refresh);
+    chrome.tabs.onCreated.addListener(refresh);
+
+    // Group lifecycle/updates
+    chrome.tabGroups.onCreated.addListener(refresh);
+    // Some Chrome versions expose onMoved; guard with optional chaining
+    chrome.tabGroups.onMoved?.addListener(refresh);
+    chrome.tabGroups.onRemoved.addListener(refresh);
+    chrome.tabGroups.onUpdated.addListener(refresh);
+
+    return () => {
+      chrome.tabs.onMoved.removeListener(refresh);
+      chrome.tabs.onAttached.removeListener(refresh);
+      chrome.tabs.onDetached.removeListener(refresh);
+      chrome.tabs.onRemoved.removeListener(refresh);
+      chrome.tabs.onCreated.removeListener(refresh);
+
+      chrome.tabGroups.onCreated.removeListener(refresh);
+      chrome.tabGroups.onMoved?.removeListener?.(refresh);
+      chrome.tabGroups.onRemoved.removeListener(refresh);
+      chrome.tabGroups.onUpdated.removeListener(refresh);
+    };
   }, []);
 
   return (
