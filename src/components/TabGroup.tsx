@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import TabList from "./TabList";
 import { getGroupColor } from "../utils/colorUtils";
 import LoadingSpinner from "./LoadingSpinner";
@@ -52,12 +52,6 @@ const TabGroup = ({
       }`}
     >
       <div className="flex items-center gap-3">
-        <button
-          className="p-1 hover:rounded-material-small hover:bg-material-elevated text-material-text-secondary hover:text-material-text-primary cursor-grab transition-all duration-[var(--animate-material-fast)] hover:shadow-material-2"
-          title="Drag to reorder"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
         <div className={`w-3 h-3 rounded-full ${getGroupColor(group.color)}`} />
         <span className="font-medium text-material-text-primary text-sm flex-1 truncate">
           {group.title || "Untitled Group"}

@@ -6,7 +6,6 @@ import NoGroupsMessage from "./components/NoGroupsMessage";
 import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
 import Tooltip from "./components/Tooltip";
-import SearchComponent from "./components/SearchComponent";
 import GroupEditor from "./components/GroupEditor";
 
 function App() {
@@ -321,21 +320,6 @@ function App() {
 
         <div className="flex-1 p-4 overflow-y-auto scrollbar-custom">
           <div className="mb-4">
-            {/* Search Component */}
-            <div className="mb-4">
-              <SearchComponent
-                placeholder="Search tabs and groups..."
-                onSearch={(query) => {
-                  // Search functionality will be implemented later
-                  console.log("Search query:", query);
-                }}
-                onClear={() => {
-                  // Clear functionality will be implemented later
-                  console.log("Search cleared");
-                }}
-              />
-            </div>
-
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-lg font-semibold text-material-text-primary flex items-center gap-2">
                 <Folder className="w-4 h-4" />
