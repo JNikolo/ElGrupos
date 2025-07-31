@@ -83,10 +83,8 @@ function App() {
         .map((tab) => tab.id)
         .filter((id): id is number => id !== undefined);
       if (tabIds.length > 0) {
-        // Chrome expects individual tab IDs or spread array, so we'll process one by one
-        for (const tabId of tabIds) {
-          await chrome.tabs.ungroup(tabId);
-        }
+        // Ungroup all tabs at once using the array of tab IDs
+        await chrome.tabs.ungroup(tabIds);
       }
 
       // Note: Chrome automatically removes empty groups, so no need to explicitly delete
