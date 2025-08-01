@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import type { GroupData, ChromeTabGroupColor } from "../services/types";
 
 export interface UseGroupEditorReturn {
   isOpen: boolean;
@@ -11,11 +12,8 @@ export interface UseGroupEditorReturn {
 }
 
 interface UseGroupEditorProps {
-  onCreateGroup: (data: { title: string; color: string }) => Promise<void>;
-  onUpdateGroup: (
-    groupId: number,
-    data: { title: string; color: string }
-  ) => Promise<void>;
+  onCreateGroup: (data: GroupData) => Promise<void>;
+  onUpdateGroup: (groupId: number, data: GroupData) => Promise<void>;
 }
 
 export const useGroupEditor = ({
@@ -39,12 +37,17 @@ export const useGroupEditor = ({
   const saveGroup = useCallback(
     async (groupData: { title: string; color: string }) => {
       try {
+        const typedGroupData: GroupData = {
+          title: groupData.title,
+          color: groupData.color as ChromeTabGroupColor,
+        };
+
         if (editingGroup) {
           // Update existing group - delegate to useTabGroups
-          await onUpdateGroup(editingGroup.id, groupData);
+          await onUpdateGroup(editingGroup.id, typedGroupData);
         } else {
           // Create new group - delegate to useTabGroups
-          await onCreateGroup(groupData);
+          await onCreateGroup(typedGroupData);
         }
       } catch (error) {
         console.error("Error saving group:", error);
