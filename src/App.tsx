@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Folder, RefreshCw, Plus } from "lucide-react";
 import Header from "./components/Header";
 import TabGroupList from "./components/TabGroupList";
@@ -7,60 +7,22 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
 import Tooltip from "./components/Tooltip";
 import GroupEditor from "./components/GroupEditor";
+import { useTabGroups } from "./hooks/useTabGroups";
 
 function App() {
-  const [tabGroups, setTabGroups] = useState<chrome.tabGroups.TabGroup[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    tabGroups,
+    loading,
+    error,
+    loadTabGroups,
+    handleDeleteGroup,
+    handleUngroupTabs,
+    handleAddTab,
+    handleDuplicateGroup,
+  } = useTabGroups();
   const [isGroupEditorOpen, setIsGroupEditorOpen] = useState(false);
   const [editingGroup, setEditingGroup] =
     useState<chrome.tabGroups.TabGroup | null>(null);
-
-  const loadTabGroups = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Use the current window so the order matches what the user sees
-      const currentWindow = await chrome.windows.getCurrent();
-
-      // Get all groups and all tabs for this window in parallel
-      const [groups, tabs] = await Promise.all([
-        chrome.tabGroups.query({ windowId: currentWindow.id }),
-        chrome.tabs.query({ windowId: currentWindow.id }),
-      ]);
-
-      // Build a map: groupId -> leftmost tab index
-      const leftmostIndexByGroup = new Map<number, number>();
-      for (const tab of tabs) {
-        if (
-          tab.groupId !== undefined &&
-          tab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE &&
-          typeof tab.index === "number"
-        ) {
-          const existing = leftmostIndexByGroup.get(tab.groupId);
-          if (existing === undefined || tab.index < existing) {
-            leftmostIndexByGroup.set(tab.groupId, tab.index);
-          }
-        }
-      }
-
-      // Sort groups by the leftmost tab index
-      const sorted = [...groups].sort((a, b) => {
-        const ai = leftmostIndexByGroup.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-        const bi = leftmostIndexByGroup.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-        return ai - bi;
-      });
-
-      setTabGroups(sorted);
-    } catch (error) {
-      console.error("Error loading tab groups:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to load tab groups"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreateGroup = () => {
     setEditingGroup(null);
@@ -70,149 +32,6 @@ function App() {
   const handleEditGroup = (group: chrome.tabGroups.TabGroup) => {
     setEditingGroup(group);
     setIsGroupEditorOpen(true);
-  };
-
-  const handleDeleteGroup = async (groupId: number) => {
-    try {
-      // Get all tabs in the group first
-      const tabs = await chrome.tabs.query({ groupId });
-
-      // Remove tabs from the group (ungroup them first)
-      const tabIds = tabs
-        .map((tab) => tab.id)
-        .filter((id): id is number => id !== undefined);
-      if (tabIds.length === 1) {
-        await chrome.tabs.ungroup(tabIds[0]);
-      } else if (tabIds.length > 1) {
-        await chrome.tabs.ungroup(tabIds as [number, ...number[]]);
-      }
-
-      // Note: Chrome automatically removes empty groups, so no need to explicitly delete
-      console.log("Deleted group:", groupId);
-
-      // Refresh the groups list
-      await loadTabGroups();
-    } catch (error) {
-      console.error("Error deleting group:", error);
-      setError("Failed to delete group");
-    }
-  };
-
-  const handleUngroupTabs = async (groupId: number) => {
-    try {
-      // Get all tabs in the group
-      const tabs = await chrome.tabs.query({ groupId });
-
-      // Remove all tabs from the group
-      const tabIds = tabs
-        .map((tab) => tab.id)
-        .filter((id): id is number => id !== undefined);
-
-      if (tabIds.length === 1) {
-        await chrome.tabs.ungroup(tabIds[0]);
-      } else if (tabIds.length > 1) {
-        await chrome.tabs.ungroup(tabIds as [number, ...number[]]);
-      }
-
-      console.log("Ungrouped tabs from group:", groupId);
-
-      // Refresh the groups list
-      await loadTabGroups();
-    } catch (error) {
-      console.error("Error ungrouping tabs:", error);
-      setError("Failed to ungroup tabs");
-    }
-  };
-
-  const handleAddTab = async (groupId: number) => {
-    try {
-      // Get the current active tab
-      const activeTabs = await chrome.tabs.query({
-        active: true,
-        currentWindow: true,
-      });
-      if (activeTabs.length > 0 && activeTabs[0].id !== undefined) {
-        const activeTab = activeTabs[0];
-
-        // Check if the tab is already in a group
-        if (activeTab.groupId !== chrome.tabGroups.TAB_GROUP_ID_NONE) {
-          throw new Error(
-            "Active tab is already in a group. Please ungroup it first or select a different tab."
-          );
-        }
-
-        // Add the active tab to the group
-        await chrome.tabs.group({
-          tabIds: [activeTab.id!],
-          groupId: groupId,
-        });
-
-        console.log("Added tab to group:", groupId);
-
-        // Refresh the groups list
-        await loadTabGroups();
-      } else {
-        throw new Error("No active tab found to add to group");
-      }
-    } catch (error) {
-      console.error("Error adding tab to group:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to add tab to group";
-      setError(errorMessage);
-    }
-  };
-
-  const handleDuplicateGroup = async (groupId: number) => {
-    try {
-      // Get the group details
-      const group = await chrome.tabGroups.get(groupId);
-      if (!group) {
-        throw new Error("Group not found");
-      }
-
-      // Get all tabs in the original group
-      const tabs = await chrome.tabs.query({ groupId });
-
-      if (tabs.length === 0) {
-        throw new Error("No tabs found in group to duplicate");
-      }
-
-      // Create new tabs by duplicating each tab in the group
-      const newTabIds: number[] = [];
-      for (const tab of tabs) {
-        if (tab.id !== undefined) {
-          const duplicatedTab = await chrome.tabs.duplicate(tab.id);
-          if (duplicatedTab && duplicatedTab.id !== undefined) {
-            newTabIds.push(duplicatedTab.id);
-          }
-        }
-      }
-
-      if (newTabIds.length === 0) {
-        throw new Error("Failed to duplicate any tabs");
-      }
-
-      // Create a new group with the duplicated tabs
-      const newGroupId = await chrome.tabs.group({
-        tabIds: newTabIds as [number, ...number[]],
-      });
-
-      // Update the new group with the same title and color as the original
-      await chrome.tabGroups.update(newGroupId, {
-        title: group.title ? `${group.title} (Copy)` : "Untitled Group (Copy)",
-        color: group.color,
-      });
-
-      console.log("Duplicated group:", groupId, "to", newGroupId);
-
-      // Refresh the groups list
-      await loadTabGroups();
-    } catch (error) {
-      console.error("Error duplicating group:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to duplicate group";
-      setError(errorMessage);
-    }
   };
 
   const handleGroupSave = async (groupData: {
@@ -279,39 +98,6 @@ function App() {
     setIsGroupEditorOpen(false);
     setEditingGroup(null);
   };
-
-  useEffect(() => {
-    loadTabGroups();
-
-    const refresh = () => loadTabGroups();
-
-    // Tabs moving between/within groups changes group order
-    chrome.tabs.onMoved.addListener(refresh);
-    chrome.tabs.onAttached.addListener(refresh);
-    chrome.tabs.onDetached.addListener(refresh);
-    chrome.tabs.onRemoved.addListener(refresh);
-    chrome.tabs.onCreated.addListener(refresh);
-
-    // Group lifecycle/updates
-    chrome.tabGroups.onCreated.addListener(refresh);
-    // Some Chrome versions expose onMoved; guard with optional chaining
-    chrome.tabGroups.onMoved?.addListener(refresh);
-    chrome.tabGroups.onRemoved.addListener(refresh);
-    chrome.tabGroups.onUpdated.addListener(refresh);
-
-    return () => {
-      chrome.tabs.onMoved.removeListener(refresh);
-      chrome.tabs.onAttached.removeListener(refresh);
-      chrome.tabs.onDetached.removeListener(refresh);
-      chrome.tabs.onRemoved.removeListener(refresh);
-      chrome.tabs.onCreated.removeListener(refresh);
-
-      chrome.tabGroups.onCreated.removeListener(refresh);
-      chrome.tabGroups.onMoved?.removeListener(refresh);
-      chrome.tabGroups.onRemoved.removeListener(refresh);
-      chrome.tabGroups.onUpdated.removeListener(refresh);
-    };
-  }, []);
 
   return (
     <div className="w-96 h-[600px] bg-material-dark flex flex-col overflow-hidden">
