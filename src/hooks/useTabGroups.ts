@@ -5,6 +5,11 @@ export interface UseTabGroupsReturn {
   loading: boolean;
   error: string | null;
   loadTabGroups: () => Promise<void>;
+  handleCreateGroup: (data: { title: string; color: string }) => Promise<void>;
+  handleUpdateGroup: (
+    groupId: number,
+    data: { title: string; color: string }
+  ) => Promise<void>;
   handleDeleteGroup: (groupId: number) => Promise<void>;
   handleUngroupTabs: (groupId: number) => Promise<void>;
   handleAddTab: (groupId: number) => Promise<void>;
@@ -122,6 +127,81 @@ export const useTabGroups = (): UseTabGroupsReturn => {
       setError(errorMessage);
     },
     []
+  );
+
+  const handleCreateGroup = useCallback(
+    async (data: { title: string; color: string }) => {
+      try {
+        // Get the current active tab
+        const activeTabs = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+
+        if (activeTabs.length === 0 || !activeTabs[0].id) {
+          throw new Error("No active tab found to create group");
+        }
+
+        // Create group with active tab
+        const groupId = await chrome.tabs.group({
+          tabIds: [activeTabs[0].id],
+        });
+
+        // Update group with title and color
+        await chrome.tabGroups.update(groupId, {
+          title: data.title,
+          color: data.color as
+            | "blue"
+            | "cyan"
+            | "green"
+            | "grey"
+            | "orange"
+            | "pink"
+            | "purple"
+            | "red"
+            | "yellow",
+        });
+
+        console.log("Created new group:", groupId, data);
+
+        // Refresh the groups list
+        await loadTabGroups();
+      } catch (error) {
+        handleError(error, "creating group", "Failed to create group");
+        throw error;
+      }
+    },
+    [loadTabGroups, handleError]
+  );
+
+  const handleUpdateGroup = useCallback(
+    async (groupId: number, data: { title: string; color: string }) => {
+      try {
+        // Update existing group
+        await chrome.tabGroups.update(groupId, {
+          title: data.title,
+          color: data.color as
+            | "blue"
+            | "cyan"
+            | "green"
+            | "grey"
+            | "orange"
+            | "pink"
+            | "purple"
+            | "red"
+            | "yellow",
+        });
+
+        console.log("Updated group:", groupId, data);
+
+        // Refresh the groups list
+        await loadTabGroups();
+      } catch (error) {
+        handleError(error, "updating group", "Failed to update group");
+        throw error;
+      }
+    },
+    [loadTabGroups, handleError]
   );
 
   const handleDeleteGroup = useCallback(
@@ -266,6 +346,8 @@ export const useTabGroups = (): UseTabGroupsReturn => {
     loading,
     error,
     loadTabGroups,
+    handleCreateGroup,
+    handleUpdateGroup,
     handleDeleteGroup,
     handleUngroupTabs,
     handleAddTab,

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Folder, RefreshCw, Plus } from "lucide-react";
 import Header from "./components/Header";
 import TabGroupList from "./components/TabGroupList";
@@ -8,96 +7,35 @@ import ErrorMessage from "./components/ErrorMessage";
 import Tooltip from "./components/Tooltip";
 import GroupEditor from "./components/GroupEditor";
 import { useTabGroups } from "./hooks/useTabGroups";
+import { useGroupEditor } from "./hooks/useGroupEditor";
 
 function App() {
+  // Get tab groups operations
   const {
     tabGroups,
     loading,
     error,
     loadTabGroups,
+    handleCreateGroup, // NEW: For creating groups
+    handleUpdateGroup, // NEW: For updating groups
     handleDeleteGroup,
     handleUngroupTabs,
     handleAddTab,
     handleDuplicateGroup,
   } = useTabGroups();
-  const [isGroupEditorOpen, setIsGroupEditorOpen] = useState(false);
-  const [editingGroup, setEditingGroup] =
-    useState<chrome.tabGroups.TabGroup | null>(null);
 
-  const handleCreateGroup = () => {
-    setEditingGroup(null);
-    setIsGroupEditorOpen(true);
-  };
-
-  const handleEditGroup = (group: chrome.tabGroups.TabGroup) => {
-    setEditingGroup(group);
-    setIsGroupEditorOpen(true);
-  };
-
-  const handleGroupSave = async (groupData: {
-    title: string;
-    color: string;
-  }) => {
-    try {
-      if (editingGroup) {
-        // Update existing group
-        await chrome.tabGroups.update(editingGroup.id, {
-          title: groupData.title,
-          color: groupData.color as
-            | "blue"
-            | "cyan"
-            | "green"
-            | "grey"
-            | "orange"
-            | "pink"
-            | "purple"
-            | "red"
-            | "yellow",
-        });
-        console.log("Updated group:", editingGroup.id, groupData);
-      } else {
-        // Create new group with current active tab
-        const activeTabs = await chrome.tabs.query({
-          active: true,
-          currentWindow: true,
-        });
-        if (activeTabs.length > 0 && activeTabs[0].id) {
-          const groupId = await chrome.tabs.group({
-            tabIds: [activeTabs[0].id],
-          });
-          await chrome.tabGroups.update(groupId, {
-            title: groupData.title,
-            color: groupData.color as
-              | "blue"
-              | "cyan"
-              | "green"
-              | "grey"
-              | "orange"
-              | "pink"
-              | "purple"
-              | "red"
-              | "yellow",
-          });
-          console.log("Created new group:", groupId, groupData);
-        } else {
-          throw new Error("No active tab found to create group");
-        }
-      }
-
-      // Refresh the groups list to show updated data
-      await loadTabGroups();
-    } catch (error) {
-      console.error("Error saving group:", error);
-    } finally {
-      setIsGroupEditorOpen(false);
-      setEditingGroup(null);
-    }
-  };
-
-  const handleGroupEditorClose = () => {
-    setIsGroupEditorOpen(false);
-    setEditingGroup(null);
-  };
+  // Get group editor operations that delegate to useTabGroups
+  const {
+    isOpen: isGroupEditorOpen,
+    mode,
+    initialData,
+    openEditor,
+    closeEditor,
+    saveGroup,
+  } = useGroupEditor({
+    onCreateGroup: handleCreateGroup, // Delegate create to useTabGroups
+    onUpdateGroup: handleUpdateGroup, // Delegate update to useTabGroups
+  });
 
   return (
     <div className="w-96 h-[600px] bg-material-dark flex flex-col overflow-hidden">
@@ -117,7 +55,7 @@ function App() {
               <div className="flex items-center gap-2">
                 <Tooltip content="Create new group">
                   <button
-                    onClick={handleCreateGroup}
+                    onClick={() => openEditor()}
                     className="px-3 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
                   >
                     <Plus className="w-3 h-3" />
@@ -150,7 +88,7 @@ function App() {
             ) : (
               <TabGroupList
                 tabGroups={tabGroups}
-                onEditGroup={handleEditGroup}
+                onEditGroup={(group) => openEditor(group)}
                 onDeleteGroup={handleDeleteGroup}
                 onUngroupTabs={handleUngroupTabs}
                 onAddTab={handleAddTab}
@@ -164,14 +102,10 @@ function App() {
       {/* Group Editor Modal */}
       <GroupEditor
         isOpen={isGroupEditorOpen}
-        onClose={handleGroupEditorClose}
-        onSave={handleGroupSave}
-        initialData={
-          editingGroup
-            ? { title: editingGroup.title || "", color: editingGroup.color }
-            : undefined
-        }
-        mode={editingGroup ? "edit" : "create"}
+        onClose={closeEditor}
+        onSave={saveGroup}
+        initialData={initialData}
+        mode={mode}
       />
     </div>
   );
