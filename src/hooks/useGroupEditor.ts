@@ -1,14 +1,14 @@
 import { useState, useCallback } from "react";
-import type { GroupData, ChromeTabGroupColor } from "../services/types";
+import type { GroupData } from "../services/types";
 
 export interface UseGroupEditorReturn {
   isOpen: boolean;
   editingGroup: chrome.tabGroups.TabGroup | null;
   mode: "create" | "edit";
-  initialData: { title: string; color: string } | undefined;
+  initialData: GroupData | undefined;
   openEditor: (group?: chrome.tabGroups.TabGroup) => void;
   closeEditor: () => void;
-  saveGroup: (data: { title: string; color: string }) => Promise<void>;
+  saveGroup: (data: GroupData) => Promise<void>;
 }
 
 interface UseGroupEditorProps {
@@ -35,19 +35,14 @@ export const useGroupEditor = ({
   }, []);
 
   const saveGroup = useCallback(
-    async (groupData: { title: string; color: string }) => {
+    async (groupData: GroupData) => {
       try {
-        const typedGroupData: GroupData = {
-          title: groupData.title,
-          color: groupData.color as ChromeTabGroupColor,
-        };
-
         if (editingGroup) {
           // Update existing group - delegate to useTabGroups
-          await onUpdateGroup(editingGroup.id, typedGroupData);
+          await onUpdateGroup(editingGroup.id, groupData);
         } else {
           // Create new group - delegate to useTabGroups
-          await onCreateGroup(typedGroupData);
+          await onCreateGroup(groupData);
         }
       } catch (error) {
         console.error("Error saving group:", error);
@@ -61,7 +56,7 @@ export const useGroupEditor = ({
 
   const mode: "create" | "edit" = editingGroup ? "edit" : "create";
 
-  const initialData = editingGroup
+  const initialData: GroupData | undefined = editingGroup
     ? { title: editingGroup.title || "", color: editingGroup.color }
     : undefined;
 

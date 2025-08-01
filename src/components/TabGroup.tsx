@@ -8,10 +8,10 @@ import GroupActions from "./GroupActions";
 interface TabGroupProps {
   group: chrome.tabGroups.TabGroup;
   onEdit?: (group: chrome.tabGroups.TabGroup) => void;
-  onDelete?: (groupId: number) => void;
-  onUngroup?: (groupId: number) => void;
-  onAddTab?: (groupId: number) => void;
-  onDuplicate?: (groupId: number) => void;
+  onDelete?: (groupId: number) => Promise<void>;
+  onUngroup?: (groupId: number) => Promise<void>;
+  onAddTab?: (groupId: number) => Promise<void>;
+  onDuplicate?: (groupId: number) => Promise<void>;
 }
 
 const TabGroup = ({
@@ -64,17 +64,17 @@ const TabGroup = ({
           onEdit={() => {
             onEdit?.(group);
           }}
-          onDelete={() => {
-            onDelete?.(group.id);
+          onDelete={async () => {
+            await onDelete?.(group.id);
           }}
-          onDuplicate={() => {
-            onDuplicate?.(group.id);
+          onDuplicate={async () => {
+            await onDuplicate?.(group.id);
           }}
-          onUngroup={() => {
-            onUngroup?.(group.id);
+          onUngroup={async () => {
+            await onUngroup?.(group.id);
           }}
-          onAddTab={() => {
-            onAddTab?.(group.id);
+          onAddTab={async () => {
+            await onAddTab?.(group.id);
           }}
         />
 
