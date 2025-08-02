@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { MoreVertical, Edit3, Trash2, Plus, Copy, Ungroup } from "lucide-react";
+import { MoreVertical } from "lucide-react";
 import Tooltip from "./Tooltip";
+import { useGroupActions } from "../hooks/useGroupActions";
 
 interface GroupActionsProps {
   groupId: number;
   groupTitle: string;
   onEdit: () => void;
-  onDelete: () => void;
-  onDuplicate: () => void;
-  onUngroup: () => void;
-  onAddTab: () => void;
+  onDelete: () => Promise<void>;
+  onDuplicate: () => Promise<void>;
+  onUngroup: () => Promise<void>;
+  onAddTab: () => Promise<void>;
 }
 
 const GroupActions = ({
@@ -23,53 +24,23 @@ const GroupActions = ({
 }: GroupActionsProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const actions = [
-    {
-      icon: Edit3,
-      label: "Edit Group",
-      onClick: () => {
-        onEdit();
-        setIsOpen(false);
-      },
-      variant: "default" as const,
-    },
-    {
-      icon: Plus,
-      label: "Add Current Tab",
-      onClick: () => {
-        onAddTab();
-        setIsOpen(false);
-      },
-      variant: "default" as const,
-    },
-    {
-      icon: Copy,
-      label: "Duplicate Group",
-      onClick: () => {
-        onDuplicate();
-        setIsOpen(false);
-      },
-      variant: "default" as const,
-    },
-    {
-      icon: Ungroup,
-      label: "Ungroup Tabs",
-      onClick: () => {
-        onUngroup();
-        setIsOpen(false);
-      },
-      variant: "warning" as const,
-    },
-    {
-      icon: Trash2,
-      label: "Delete Group",
-      onClick: () => {
-        onDelete();
-        setIsOpen(false);
-      },
-      variant: "danger" as const,
-    },
-  ];
+  const { actions } = useGroupActions({
+    onEdit,
+    onDelete,
+    onDuplicate,
+    onUngroup,
+    onAddTab,
+  });
+
+  const handleActionClick = async (
+    actionOnClick: () => void | Promise<void>
+  ) => {
+    try {
+      await actionOnClick();
+    } finally {
+      setIsOpen(false);
+    }
+  };
 
   const getVariantStyles = (variant: "default" | "warning" | "danger") => {
     switch (variant) {
@@ -122,7 +93,7 @@ const GroupActions = ({
                 key={index}
                 onClick={(e) => {
                   e.stopPropagation();
-                  action.onClick();
+                  handleActionClick(action.onClick);
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition-colors duration-[var(--animate-material-fast)] ${getVariantStyles(
                   action.variant

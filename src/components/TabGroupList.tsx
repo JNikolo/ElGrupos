@@ -3,10 +3,10 @@ import TabGroup from "./TabGroup";
 interface TabGroupListProps {
   tabGroups: chrome.tabGroups.TabGroup[];
   onEditGroup?: (group: chrome.tabGroups.TabGroup) => void;
-  onDeleteGroup?: (groupId: number) => void;
-  onUngroupTabs?: (groupId: number) => void;
-  onAddTab?: (groupId: number) => void;
-  onDuplicate?: (groupId: number) => void;
+  onDeleteGroup?: (groupId: number) => Promise<void>;
+  onUngroupTabs?: (groupId: number) => Promise<void>;
+  onAddTab?: (groupId: number) => Promise<void>;
+  onDuplicate?: (groupId: number) => Promise<void>;
 }
 
 const TabGroupList = ({

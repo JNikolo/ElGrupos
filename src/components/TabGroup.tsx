@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import TabList from "./TabList";
 import { getGroupColor } from "../utils/colorUtils";
 import LoadingSpinner from "./LoadingSpinner";
@@ -8,10 +8,10 @@ import GroupActions from "./GroupActions";
 interface TabGroupProps {
   group: chrome.tabGroups.TabGroup;
   onEdit?: (group: chrome.tabGroups.TabGroup) => void;
-  onDelete?: (groupId: number) => void;
-  onUngroup?: (groupId: number) => void;
-  onAddTab?: (groupId: number) => void;
-  onDuplicate?: (groupId: number) => void;
+  onDelete?: (groupId: number) => Promise<void>;
+  onUngroup?: (groupId: number) => Promise<void>;
+  onAddTab?: (groupId: number) => Promise<void>;
+  onDuplicate?: (groupId: number) => Promise<void>;
 }
 
 const TabGroup = ({
@@ -52,12 +52,6 @@ const TabGroup = ({
       }`}
     >
       <div className="flex items-center gap-3">
-        <button
-          className="p-1 hover:rounded-material-small hover:bg-material-elevated text-material-text-secondary hover:text-material-text-primary cursor-grab transition-all duration-[var(--animate-material-fast)] hover:shadow-material-2"
-          title="Drag to reorder"
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
         <div className={`w-3 h-3 rounded-full ${getGroupColor(group.color)}`} />
         <span className="font-medium text-material-text-primary text-sm flex-1 truncate">
           {group.title || "Untitled Group"}
@@ -70,17 +64,17 @@ const TabGroup = ({
           onEdit={() => {
             onEdit?.(group);
           }}
-          onDelete={() => {
-            onDelete?.(group.id);
+          onDelete={async () => {
+            await onDelete?.(group.id);
           }}
-          onDuplicate={() => {
-            onDuplicate?.(group.id);
+          onDuplicate={async () => {
+            await onDuplicate?.(group.id);
           }}
-          onUngroup={() => {
-            onUngroup?.(group.id);
+          onUngroup={async () => {
+            await onUngroup?.(group.id);
           }}
-          onAddTab={() => {
-            onAddTab?.(group.id);
+          onAddTab={async () => {
+            await onAddTab?.(group.id);
           }}
         />
 
