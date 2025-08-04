@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import { chromeAPI } from "../services/chromeAPI";
-import { Edit3, X, Copy, Download, FileText, Code, Eye } from "lucide-react";
+import {
+  Edit3,
+  X,
+  Copy,
+  Download,
+  FileText,
+  Code,
+  Eye,
+  Check,
+} from "lucide-react";
 import LoadingSpinner from "./LoadingSpinner";
 
 interface ShareGroupModalProps {
@@ -17,6 +26,10 @@ const ShareGroupModal = ({ handleClose, groupId }: ShareGroupModalProps) => {
     "markdown"
   );
   const [showPreview, setShowPreview] = useState(true);
+  const [actionStates, setActionStates] = useState({
+    copying: false,
+    downloading: false,
+  });
 
   useEffect(() => {
     const loadGroupData = async () => {
@@ -65,35 +78,53 @@ const ShareGroupModal = ({ handleClose, groupId }: ShareGroupModalProps) => {
   };
 
   const handleCopyToClipboard = async () => {
+    if (actionStates.copying) return;
+
+    setActionStates((prev) => ({ ...prev, copying: true }));
     try {
       await navigator.clipboard.writeText(getCurrentExportData());
-      // Could add a toast notification here
     } catch (error) {
       console.error("Failed to copy to clipboard:", error);
+    } finally {
+      setTimeout(() => {
+        setActionStates((prev) => ({ ...prev, copying: false }));
+      }, 2000);
     }
   };
 
   const handleDownloadFile = () => {
-    const data = getCurrentExportData();
-    const filename = `${title || "tab-group"}.${
-      exportFormat === "markdown" ? "md" : "json"
-    }`;
-    const blob = new Blob([data], {
-      type: exportFormat === "markdown" ? "text/markdown" : "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (actionStates.downloading) return;
+
+    setActionStates((prev) => ({ ...prev, downloading: true }));
+    try {
+      const data = getCurrentExportData();
+      const filename = `${title || "tab-group"}.${
+        exportFormat === "markdown" ? "md" : "json"
+      }`;
+      const blob = new Blob([data], {
+        type:
+          exportFormat === "markdown" ? "text/markdown" : "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to download file:", error);
+    } finally {
+      setTimeout(() => {
+        setActionStates((prev) => ({ ...prev, downloading: false }));
+      }, 2000);
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-material-overlay flex items-center justify-center z-50 p-4">
-      <div className="bg-material-surface border border-material-border rounded-material-large shadow-material-8 w-full max-w-md">
+      <div className="bg-material-surface border border-material-border rounded-material-large shadow-material-8 w-full max-w-lg">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -153,27 +184,39 @@ const ShareGroupModal = ({ handleClose, groupId }: ShareGroupModalProps) => {
             <div className="flex gap-2">
               <button
                 onClick={handleCopyToClipboard}
-                disabled={loading || error}
+                disabled={loading || error || actionStates.copying}
                 className={`flex-1 p-3 rounded-material-medium transition-colors duration-[var(--animate-material-fast)] font-medium text-sm flex items-center justify-center gap-2 shadow-material-1 ${
                   loading || error
                     ? "bg-material-border text-material-text-disabled cursor-not-allowed"
+                    : actionStates.copying
+                    ? "bg-material-success text-material-text-primary"
                     : "bg-material-primary hover:bg-material-primary-dark text-material-text-primary"
                 }`}
               >
-                <Copy className="w-4 h-4" />
-                Copy
+                {actionStates.copying ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+                {actionStates.copying ? "Copied!" : "Copy"}
               </button>
               <button
                 onClick={handleDownloadFile}
-                disabled={loading || error}
+                disabled={loading || error || actionStates.downloading}
                 className={`flex-1 p-3 rounded-material-medium transition-colors duration-[var(--animate-material-fast)] font-medium text-sm flex items-center justify-center gap-2 shadow-material-1 ${
                   loading || error
                     ? "bg-material-border text-material-text-disabled cursor-not-allowed"
+                    : actionStates.downloading
+                    ? "bg-material-success text-material-text-primary"
                     : "bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary"
                 }`}
               >
-                <Download className="w-4 h-4" />
-                Download
+                {actionStates.downloading ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+                {actionStates.downloading ? "Downloaded!" : "Download"}
               </button>
             </div>
 
