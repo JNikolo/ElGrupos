@@ -73,7 +73,13 @@ function App() {
                   </button>
                 </Tooltip>
                 {isGroupImportOpen && (
-                  <ImportGroupModal handleClose={closeImportModal} />
+                  <ImportGroupModal
+                    handleClose={closeImportModal}
+                    onImport={(data) => {
+                      console.log("Imported data:", data);
+                      closeImportModal();
+                    }}
+                  />
                 )}
                 <Tooltip content="Create new group">
                   <button
