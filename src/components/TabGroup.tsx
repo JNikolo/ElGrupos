@@ -12,6 +12,7 @@ interface TabGroupProps {
   onUngroup?: (groupId: number) => Promise<void>;
   onAddTab?: (groupId: number) => Promise<void>;
   onDuplicate?: (groupId: number) => Promise<void>;
+  onShare?: (group: chrome.tabGroups.TabGroup) => void;
 }
 
 const TabGroup = ({
@@ -21,6 +22,7 @@ const TabGroup = ({
   onUngroup,
   onAddTab,
   onDuplicate,
+  onShare,
 }: TabGroupProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
@@ -75,6 +77,9 @@ const TabGroup = ({
           }}
           onAddTab={async () => {
             await onAddTab?.(group.id);
+          }}
+          onShare={() => {
+            onShare?.(group);
           }}
         />
 

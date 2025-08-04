@@ -6,6 +6,7 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
 import Tooltip from "./components/Tooltip";
 import GroupEditor from "./components/GroupEditor";
+import ShareGroupModal from "./components/ShareGroupModal";
 import { useTabGroups } from "./hooks/useTabGroups";
 import { useGroupEditor } from "./hooks/useGroupEditor";
 import ImportGroupModal from "./components/ImportGroupModal";
@@ -46,6 +47,15 @@ function App() {
   };
   const closeImportModal = () => {
     setIsGroupImportOpen(false);
+  };
+
+  const [shareGroup, setShareGroup] =
+    useState<chrome.tabGroups.TabGroup | null>(null);
+  const openShareModal = (group: chrome.tabGroups.TabGroup) => {
+    setShareGroup(group);
+  };
+  const closeShareModal = () => {
+    setShareGroup(null);
   };
 
   return (
@@ -129,6 +139,7 @@ function App() {
                 onUngroupTabs={handleUngroupTabs}
                 onAddTab={handleAddTab}
                 onDuplicate={handleDuplicateGroup}
+                onShareGroup={openShareModal}
               />
             )}
           </div>
@@ -143,6 +154,14 @@ function App() {
         initialData={initialData}
         mode={mode}
       />
+
+      {/* Share Group Modal */}
+      {shareGroup && (
+        <ShareGroupModal
+          groupId={shareGroup.id}
+          handleClose={closeShareModal}
+        />
+      )}
     </div>
   );
 }

@@ -7,6 +7,7 @@ interface TabGroupListProps {
   onUngroupTabs?: (groupId: number) => Promise<void>;
   onAddTab?: (groupId: number) => Promise<void>;
   onDuplicate?: (groupId: number) => Promise<void>;
+  onShareGroup?: (group: chrome.tabGroups.TabGroup) => void;
 }
 
 const TabGroupList = ({
@@ -16,6 +17,7 @@ const TabGroupList = ({
   onUngroupTabs,
   onAddTab,
   onDuplicate,
+  onShareGroup,
 }: TabGroupListProps) => (
   <div className="space-y-2">
     {tabGroups.map((group) => (
@@ -27,6 +29,7 @@ const TabGroupList = ({
         onUngroup={onUngroupTabs}
         onAddTab={onAddTab}
         onDuplicate={onDuplicate}
+        onShare={onShareGroup}
       />
     ))}
   </div>
