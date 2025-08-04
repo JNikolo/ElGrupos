@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { tabGroupsService } from "../services/tabGroupsService";
 import { TabGroupsError } from "../services/errors";
+import { ImportParser, ImportParseError } from "../services/importParser";
 import type { GroupData } from "../services/types";
 
 export interface UseTabGroupsReturn {
@@ -14,6 +15,7 @@ export interface UseTabGroupsReturn {
   handleUngroupTabs: (groupId: number) => Promise<void>;
   handleAddTab: (groupId: number) => Promise<void>;
   handleDuplicateGroup: (groupId: number) => Promise<void>;
+  handleImportGroups: (data: string) => Promise<void>;
 }
 
 export const useTabGroups = (): UseTabGroupsReturn => {
@@ -167,6 +169,56 @@ export const useTabGroups = (): UseTabGroupsReturn => {
     [loadTabGroups, handleError]
   );
 
+  const handleImportGroups = useCallback(
+    async (data: string) => {
+      try {
+        const importedGroups = ImportParser.parseData(data);
+        console.log("Parsed imported groups:", importedGroups);
+
+        let successCount = 0;
+        let errorCount = 0;
+        const errors: string[] = [];
+
+        for (const group of importedGroups) {
+          try {
+            await tabGroupsService.createGroupFromImport(group);
+            successCount++;
+          } catch (error) {
+            errorCount++;
+            const errorMessage =
+              error instanceof Error ? error.message : "Unknown error";
+            errors.push(`${group.title}: ${errorMessage}`);
+            console.error(`Failed to import group "${group.title}":`, error);
+          }
+        }
+
+        await loadTabGroups();
+
+        if (errorCount > 0 && successCount === 0) {
+          // All imports failed
+          throw new Error(`Failed to import any groups:\n${errors.join("\n")}`);
+        } else if (errorCount > 0) {
+          // Partial success
+          console.warn(
+            `${successCount} groups imported successfully, ${errorCount} failed:`,
+            errors
+          );
+        } else {
+          // All successful
+          console.log(`Successfully imported ${successCount} groups`);
+        }
+      } catch (error) {
+        if (error instanceof ImportParseError) {
+          handleError(error, "parsing import data", error.message);
+        } else {
+          handleError(error, "importing groups", "Failed to import groups");
+        }
+        throw error;
+      }
+    },
+    [loadTabGroups, handleError]
+  );
+
   return {
     tabGroups,
     loading,
@@ -178,5 +230,6 @@ export const useTabGroups = (): UseTabGroupsReturn => {
     handleUngroupTabs,
     handleAddTab,
     handleDuplicateGroup,
+    handleImportGroups,
   };
 };

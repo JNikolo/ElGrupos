@@ -1,7 +1,7 @@
 // services/tabGroupsService.ts
 import { chromeAPI } from "./chromeAPI";
 import { TabGroupsError } from "./errors";
-import type { GroupData } from "./types";
+import type { GroupData, ImportedGroup } from "./types";
 
 class TabGroupsService {
   private api = chromeAPI;
@@ -92,6 +92,42 @@ class TabGroupsService {
     const tabs = await this.api.getTabsInGroup(groupId);
     const tabIds = this.getValidTabIds(tabs);
     await this.api.ungroupTabs(tabIds);
+  }
+
+  async createGroupFromImport(importedGroup: ImportedGroup): Promise<number> {
+    if (!importedGroup.tabs || importedGroup.tabs.length === 0) {
+      throw new TabGroupsError("Group must have at least one tab");
+    }
+
+    // Create tabs from the imported data
+    const createdTabs: chrome.tabs.Tab[] = [];
+    for (const importedTab of importedGroup.tabs) {
+      try {
+        const tab = await this.api.createTab(importedTab.url, false);
+        createdTabs.push(tab);
+      } catch (error) {
+        console.warn(`Failed to create tab for URL: ${importedTab.url}`, error);
+        // Continue with other tabs rather than failing completely
+      }
+    }
+
+    if (createdTabs.length === 0) {
+      throw new TabGroupsError(
+        "Failed to create any tabs from the imported data"
+      );
+    }
+
+    // Group the created tabs
+    const tabIds = this.getValidTabIds(createdTabs);
+    const groupId = await this.api.groupTabs(tabIds as [number, ...number[]]);
+
+    // Update group properties
+    await this.api.updateTabGroup(groupId, {
+      title: importedGroup.title || "Imported Group",
+      color: importedGroup.color || "grey",
+    });
+
+    return groupId;
   }
 
   // Helpers

@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { Edit3, Plus, Copy, Ungroup, Trash2 } from "lucide-react";
+import { Edit3, Plus, Copy, Ungroup, Trash2, Share2 } from "lucide-react";
 
 export interface GroupAction {
   icon: typeof Edit3;
@@ -14,6 +14,7 @@ interface UseGroupActionsProps {
   onDuplicate: () => Promise<void>;
   onUngroup: () => Promise<void>;
   onAddTab: () => Promise<void>;
+  onShare: () => void;
 }
 
 export const useGroupActions = ({
@@ -22,10 +23,15 @@ export const useGroupActions = ({
   onDuplicate,
   onUngroup,
   onAddTab,
+  onShare,
 }: UseGroupActionsProps) => {
   const handleEdit = useCallback(() => {
     onEdit();
   }, [onEdit]);
+
+  const handleShare = useCallback(() => {
+    onShare();
+  }, [onShare]);
 
   const handleAddTab = useCallback(async () => {
     try {
@@ -64,6 +70,12 @@ export const useGroupActions = ({
       icon: Edit3,
       label: "Edit Group",
       onClick: handleEdit,
+      variant: "default",
+    },
+    {
+      icon: Share2,
+      label: "Share Group",
+      onClick: handleShare,
       variant: "default",
     },
     {

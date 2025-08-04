@@ -11,6 +11,7 @@ interface GroupActionsProps {
   onDuplicate: () => Promise<void>;
   onUngroup: () => Promise<void>;
   onAddTab: () => Promise<void>;
+  onShare: () => void;
 }
 
 const GroupActions = ({
@@ -21,6 +22,7 @@ const GroupActions = ({
   onDuplicate,
   onUngroup,
   onAddTab,
+  onShare,
 }: GroupActionsProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -30,6 +32,7 @@ const GroupActions = ({
     onDuplicate,
     onUngroup,
     onAddTab,
+    onShare,
   });
 
   const handleActionClick = async (

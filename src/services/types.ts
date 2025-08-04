@@ -3,6 +3,17 @@ export interface GroupData {
   color: ChromeTabGroupColor;
 }
 
+export interface ImportedTab {
+  title: string;
+  url: string;
+}
+
+export interface ImportedGroup {
+  title: string;
+  color?: ChromeTabGroupColor;
+  tabs: ImportedTab[];
+}
+
 export type ChromeTabGroupColor =
   | "blue"
   | "cyan"

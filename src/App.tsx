@@ -1,4 +1,4 @@
-import { Folder, RefreshCw, Plus } from "lucide-react";
+import { Folder, RefreshCw, Plus, Import } from "lucide-react";
 import Header from "./components/Header";
 import TabGroupList from "./components/TabGroupList";
 import NoGroupsMessage from "./components/NoGroupsMessage";
@@ -6,8 +6,11 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
 import Tooltip from "./components/Tooltip";
 import GroupEditor from "./components/GroupEditor";
+import ShareGroupModal from "./components/ShareGroupModal";
 import { useTabGroups } from "./hooks/useTabGroups";
 import { useGroupEditor } from "./hooks/useGroupEditor";
+import ImportGroupModal from "./components/ImportGroupModal";
+import { useState } from "react";
 
 function App() {
   // Get tab groups operations
@@ -22,6 +25,7 @@ function App() {
     handleUngroupTabs,
     handleAddTab,
     handleDuplicateGroup,
+    handleImportGroups, // NEW: For importing groups
   } = useTabGroups();
 
   // Get group editor operations that delegate to useTabGroups
@@ -36,6 +40,23 @@ function App() {
     onCreateGroup: handleCreateGroup, // Delegate create to useTabGroups
     onUpdateGroup: handleUpdateGroup, // Delegate update to useTabGroups
   });
+
+  const [isGroupImportOpen, setIsGroupImportOpen] = useState(false);
+  const openImportModal = () => {
+    setIsGroupImportOpen(true);
+  };
+  const closeImportModal = () => {
+    setIsGroupImportOpen(false);
+  };
+
+  const [shareGroup, setShareGroup] =
+    useState<chrome.tabGroups.TabGroup | null>(null);
+  const openShareModal = (group: chrome.tabGroups.TabGroup) => {
+    setShareGroup(group);
+  };
+  const closeShareModal = () => {
+    setShareGroup(null);
+  };
 
   return (
     <div className="w-96 h-[600px] bg-material-dark flex flex-col overflow-hidden">
@@ -53,10 +74,36 @@ function App() {
                 </span>
               </h2>
               <div className="flex items-center gap-2">
+                <Tooltip content="Import tab groups">
+                  <button
+                    onClick={() => openImportModal()}
+                    className="px-2 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
+                  >
+                    <Import className="w-3 h-3" />
+                    Import
+                  </button>
+                </Tooltip>
+                {isGroupImportOpen && (
+                  <ImportGroupModal
+                    handleClose={closeImportModal}
+                    onImport={async (data) => {
+                      try {
+                        await handleImportGroups(data);
+                        // Small delay to show success before closing
+                        setTimeout(() => {
+                          closeImportModal();
+                        }, 500);
+                      } catch (error) {
+                        // Error handling is done in the hook, modal will stay open
+                        console.error("Import failed:", error);
+                      }
+                    }}
+                  />
+                )}
                 <Tooltip content="Create new group">
                   <button
                     onClick={() => openEditor()}
-                    className="px-3 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
+                    className="px-2 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
                   >
                     <Plus className="w-3 h-3" />
                     Create
@@ -66,14 +113,13 @@ function App() {
                   <button
                     onClick={loadTabGroups}
                     disabled={loading}
-                    className={`px-3 py-1 bg-material-primary hover:bg-material-primary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1 ${
+                    className={`px-2 py-1 text-material-primary hover:text-material-primary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 ${
                       loading ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
                     <RefreshCw
-                      className={`w-3 h-3 ${loading ? "animate-spin" : ""}`}
+                      className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
                     />
-                    Refresh
                   </button>
                 </Tooltip>
               </div>
@@ -93,6 +139,7 @@ function App() {
                 onUngroupTabs={handleUngroupTabs}
                 onAddTab={handleAddTab}
                 onDuplicate={handleDuplicateGroup}
+                onShareGroup={openShareModal}
               />
             )}
           </div>
@@ -107,6 +154,14 @@ function App() {
         initialData={initialData}
         mode={mode}
       />
+
+      {/* Share Group Modal */}
+      {shareGroup && (
+        <ShareGroupModal
+          groupId={shareGroup.id}
+          handleClose={closeShareModal}
+        />
+      )}
     </div>
   );
 }
