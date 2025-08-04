@@ -2,6 +2,8 @@ import { ExternalLink, Share2 } from "lucide-react";
 import TabItem from "./TabItem";
 import CopyButton from "./CopyButton";
 import Tooltip from "./Tooltip";
+import { useState } from "react";
+import ShareGroupModal from "./ShareGroupModal";
 
 interface TabListProps {
   tabs: chrome.tabs.Tab[];
@@ -9,6 +11,12 @@ interface TabListProps {
 }
 
 const TabList = ({ tabs, groupId }: TabListProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onClose = () => {
+    setIsOpen(false);
+  };
+
   if (!tabs.length) {
     return (
       <div className="text-center py-4 bg-material-surface rounded-material-medium border border-material-border mt-2 shadow-material-1">
@@ -31,8 +39,7 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
         <Tooltip content="Share all links in one URL">
           <button
             onClick={() => {
-              // Share functionality will be implemented later
-              console.log("Share all links:", allLinks);
+              setIsOpen(true);
             }}
             className="px-2 py-1 bg-material-info hover:bg-blue-600 text-material-text-primary rounded-material-small transition-colors duration-[var(--animate-material-fast)] text-xs font-medium flex items-center gap-1 shadow-material-1"
           >
@@ -47,6 +54,7 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
           <TabItem key={tab.id} tab={tab} />
         ))}
       </div>
+      {isOpen && <ShareGroupModal groupId={groupId} handleClose={onClose} />}
     </>
   );
 };
