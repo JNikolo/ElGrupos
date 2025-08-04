@@ -1,10 +1,9 @@
-import { X, Edit3, BookOpenText, FileJson, Upload, File } from "lucide-react";
-import LoadingSpinner from "./LoadingSpinner";
+import { X, Edit3, BookOpenText, FileJson, Upload, File, Loader2 } from "lucide-react";
 import { useState, useRef } from "react";
 
 interface ImportGroupModalProps {
   handleClose: () => void;
-  onImport: (data: string) => void; // Callback when data is imported
+  onImport: (data: string) => Promise<void>; // Made async for better error handling
 }
 
 const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
@@ -13,6 +12,8 @@ const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [textInput, setTextInput] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isValidFile = (file: File) => {
@@ -26,6 +27,8 @@ const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
   const handleFileSelect = (file: File) => {
     if (file && isValidFile(file)) {
       setSelectedFile(file);
+      setErrorMessage(null);
+      setSuccessMessage(null);
     }
   };
 
@@ -72,6 +75,8 @@ const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
 
   const handleRemoveFile = () => {
     setSelectedFile(null);
+    setErrorMessage(null);
+    setSuccessMessage(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -79,35 +84,50 @@ const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
 
   const handleImport = async () => {
     setLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       if (importFormat === "text") {
         const trimmed = textInput.trim();
-        if (trimmed) {
-          onImport(trimmed);
-        } else {
-          alert("Please provide some content to import.");
+        if (!trimmed) {
+          setErrorMessage("Please provide some content to import.");
+          return;
         }
+        await onImport(trimmed);
       } else if (selectedFile) {
         const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result?.toString();
-          if (result) {
-            onImport(result);
-          } else {
-            alert("Failed to read the file.");
-          }
-        };
-        reader.onerror = () => {
-          alert("Error reading file.");
-        };
-        reader.readAsText(selectedFile);
+
+        const fileContent = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => {
+            const result = reader.result?.toString();
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error("Failed to read the file content."));
+            }
+          };
+          reader.onerror = () => {
+            reject(new Error("Error reading file."));
+          };
+          reader.readAsText(selectedFile);
+        });
+
+        await onImport(fileContent);
       } else {
-        alert("No file selected.");
+        setErrorMessage("No file selected.");
+        return;
       }
+
+      // Success
+      setSuccessMessage("Groups imported successfully!");
     } catch (err) {
-      console.error(err);
-      alert("Import failed.");
+      console.error("Import error:", err);
+      setErrorMessage(
+        err instanceof Error
+          ? err.message
+          : "Import failed. Please check your data format and try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -120,15 +140,12 @@ const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              {loading ? (
-                <LoadingSpinner />
-              ) : (
-                <>
-                  <Edit3 className="w-5 h-5 text-material-primary" />
-                  <h3 className="text-lg font-semibold text-material-text-primary">
-                    Import Group
-                  </h3>
-                </>
+              <Edit3 className="w-5 h-5 text-material-primary" />
+              <h3 className="text-lg font-semibold text-material-text-primary">
+                Import Group
+              </h3>
+              {loading && (
+                <Loader2 className="w-4 h-4 text-material-primary animate-spin" />
               )}
             </div>
             <button
@@ -177,16 +194,65 @@ const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
           </div>
 
           {/* Content */}
-          <div className="space-y-4">
+          <div className="space-y-4 relative">
+            {loading && (
+              <div className="absolute inset-0 bg-material-overlay/50 rounded-material-medium z-10 flex items-center justify-center">
+                <div className="bg-material-surface px-4 py-2 rounded-material-medium shadow-material-4 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 text-material-primary animate-spin" />
+                  <span className="text-sm text-material-text-primary">Importing...</span>
+                </div>
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="p-3 bg-material-error/10 border border-material-error/20 rounded-material-medium">
+                <p className="text-sm text-material-error">{errorMessage}</p>
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="p-3 bg-material-success/10 border border-material-success/20 rounded-material-medium">
+                <p className="text-sm text-material-success">
+                  {successMessage}
+                </p>
+              </div>
+            )}
+
             {importFormat === "text" ? (
               <div className="border border-material-border rounded-material-medium overflow-hidden">
                 <textarea
                   className="w-full p-3 bg-material-surface text-material-text-primary text-xs font-mono border-0 focus:outline-none resize-none scrollbar-custom"
-                  placeholder="Paste your group data in Markdown or JSON format..."
+                  placeholder='Paste your group data here. Supports JSON and Markdown formats.
+
+JSON example:
+{
+  "title": "My Group",
+  "color": "blue",
+  "tabs": [
+    {"title": "Google", "url": "https://google.com"}
+  ]
+}
+
+Alternative JSON format:
+{
+  "groupTitle": "My Group",
+  "tabs": [
+    {"title": "Google", "url": "https://google.com"}
+  ]
+}
+
+Markdown example:
+# My Group
+- [Google](https://google.com)
+- [GitHub](https://github.com)'
                   style={{ lineHeight: "1.4" }}
-                  rows={12}
+                  rows={18}
                   value={textInput}
-                  onChange={(e) => setTextInput(e.target.value)}
+                  onChange={(e) => {
+                    setTextInput(e.target.value);
+                    setErrorMessage(null);
+                    setSuccessMessage(null);
+                  }}
                 />
               </div>
             ) : (
@@ -277,10 +343,14 @@ const ImportGroupModal = ({ handleClose, onImport }: ImportGroupModalProps) => {
           <div className="mt-6 flex justify-center">
             <button
               onClick={handleImport}
-              disabled={loading}
+              disabled={loading || !!successMessage}
               className="px-4 py-2 bg-material-primary text-material-text-primary rounded-material-small disabled:opacity-60"
             >
-              {loading ? "Importing..." : "Import"}
+              {loading
+                ? "Importing..."
+                : successMessage
+                ? "Success!"
+                : "Import"}
             </button>
           </div>
         </div>

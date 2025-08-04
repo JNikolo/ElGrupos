@@ -77,4 +77,12 @@ export const chromeAPI = {
   async deleteTabs(tabIds: number[]): Promise<void> {
     await chrome.tabs.remove(tabIds);
   },
+
+  async createTab(url: string, active?: boolean): Promise<chrome.tabs.Tab> {
+    const tab = await chrome.tabs.create({ url, active: active ?? false });
+    if (!tab) {
+      throw new Error(`Failed to create tab with URL: ${url}`);
+    }
+    return tab;
+  },
 };

@@ -24,6 +24,7 @@ function App() {
     handleUngroupTabs,
     handleAddTab,
     handleDuplicateGroup,
+    handleImportGroups, // NEW: For importing groups
   } = useTabGroups();
 
   // Get group editor operations that delegate to useTabGroups
@@ -75,9 +76,17 @@ function App() {
                 {isGroupImportOpen && (
                   <ImportGroupModal
                     handleClose={closeImportModal}
-                    onImport={(data) => {
-                      console.log("Imported data:", data);
-                      closeImportModal();
+                    onImport={async (data) => {
+                      try {
+                        await handleImportGroups(data);
+                        // Small delay to show success before closing
+                        setTimeout(() => {
+                          closeImportModal();
+                        }, 500);
+                      } catch (error) {
+                        // Error handling is done in the hook, modal will stay open
+                        console.error("Import failed:", error);
+                      }
                     }}
                   />
                 )}
