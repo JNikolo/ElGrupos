@@ -1,5 +1,3 @@
-import { useState, useEffect } from "react";
-import { chromeAPI } from "../services/chromeAPI";
 import {
   Edit3,
   X,
@@ -11,6 +9,7 @@ import {
   Check,
 } from "lucide-react";
 import LoadingSpinner from "./LoadingSpinner";
+import { useShareGroup } from "../hooks/useShareGroup";
 
 interface ShareGroupModalProps {
   groupId: number;
@@ -18,109 +17,21 @@ interface ShareGroupModalProps {
 }
 
 const ShareGroupModal = ({ handleClose, groupId }: ShareGroupModalProps) => {
-  const [title, setTitle] = useState("");
-  const [error, setError] = useState(false);
-  const [tabs, setTabs] = useState<chrome.tabs.Tab[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [exportFormat, setExportFormat] = useState<"markdown" | "json">(
-    "markdown"
-  );
-  const [showPreview, setShowPreview] = useState(true);
-  const [actionStates, setActionStates] = useState({
-    copying: false,
-    downloading: false,
-  });
-
-  useEffect(() => {
-    const loadGroupData = async () => {
-      setLoading(true);
-      setError(false);
-      try {
-        const group = await chromeAPI.getTabGroup(groupId);
-        setTitle(group.title || "Untitled Group");
-        const groupTabs = await chromeAPI.getTabsInGroup(groupId);
-        setTabs(groupTabs);
-      } catch (error) {
-        console.error("Error loading group data:", error);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadGroupData();
-  }, [groupId]);
-
-  const getMarkdownExport = () => {
-    return tabs
-      .filter((tab) => tab.url)
-      .map((tab) => `- [${tab.title || "Untitled"}](${tab.url})`)
-      .join("\n");
-  };
-
-  const getJsonExport = () => {
-    const exportData = {
-      groupTitle: title,
-      exportedAt: new Date().toISOString(),
-      tabs: tabs
-        .filter((tab) => tab.url)
-        .map((tab) => ({
-          title: tab.title || "Untitled",
-          url: tab.url,
-          favIconUrl: tab.favIconUrl || null,
-        })),
-    };
-    return JSON.stringify(exportData, null, 2);
-  };
-
-  const getCurrentExportData = () => {
-    return exportFormat === "markdown" ? getMarkdownExport() : getJsonExport();
-  };
-
-  const handleCopyToClipboard = async () => {
-    if (actionStates.copying) return;
-
-    setActionStates((prev) => ({ ...prev, copying: true }));
-    try {
-      await navigator.clipboard.writeText(getCurrentExportData());
-    } catch (error) {
-      console.error("Failed to copy to clipboard:", error);
-    } finally {
-      setTimeout(() => {
-        setActionStates((prev) => ({ ...prev, copying: false }));
-      }, 2000);
-    }
-  };
-
-  const handleDownloadFile = () => {
-    if (actionStates.downloading) return;
-
-    setActionStates((prev) => ({ ...prev, downloading: true }));
-    try {
-      const data = getCurrentExportData();
-      const filename = `${title || "tab-group"}.${
-        exportFormat === "markdown" ? "md" : "json"
-      }`;
-      const blob = new Blob([data], {
-        type:
-          exportFormat === "markdown" ? "text/markdown" : "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Failed to download file:", error);
-    } finally {
-      setTimeout(() => {
-        setActionStates((prev) => ({ ...prev, downloading: false }));
-      }, 2000);
-    }
-  };
+  const {
+    title,
+    error,
+    loading,
+    exportFormat,
+    showPreview,
+    actionStates,
+    setExportFormat,
+    setShowPreview,
+    handleCopyToClipboard,
+    handleDownloadFile,
+    getCurrentExportData,
+    getPreviewTitle,
+    getValidTabsCount,
+  } = useShareGroup({ groupId });
 
   return (
     <div className="fixed inset-0 bg-material-overlay flex items-center justify-center z-50 p-4">
@@ -244,12 +155,10 @@ const ShareGroupModal = ({ handleClose, groupId }: ShareGroupModalProps) => {
                 <div className="bg-material-elevated px-3 py-2 border-b border-material-border">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-material-text-secondary">
-                      {exportFormat === "markdown"
-                        ? "Markdown Preview"
-                        : "JSON Preview"}
+                      {getPreviewTitle()}
                     </span>
                     <span className="text-xs text-material-text-disabled">
-                      {tabs.filter((tab) => tab.url).length} tabs
+                      {getValidTabsCount()} tabs
                     </span>
                   </div>
                 </div>
