@@ -1,15 +1,15 @@
 import { Folder, RefreshCw, Plus, Import } from "lucide-react";
-import Header from "./components/Header";
-import TabGroupList from "./components/TabGroupList";
-import NoGroupsMessage from "./components/NoGroupsMessage";
-import LoadingSpinner from "./components/LoadingSpinner";
-import ErrorMessage from "./components/ErrorMessage";
-import Tooltip from "./components/Tooltip";
-import GroupEditor from "./components/GroupEditor";
-import ShareGroupModal from "./components/ShareGroupModal";
+import Header from "./components/layout/Header";
+import TabGroupList from "./components/groups/TabGroupList";
+import NoGroupsMessage from "./components/groups/NoGroupsMessage";
+import LoadingSpinner from "./components/ui/LoadingSpinner";
+import ErrorMessage from "./components/ui/ErrorMessage";
+import Tooltip from "./components/ui/Tooltip";
+import GroupEditor from "./components/groups/GroupEditor";
+import ShareGroupModal from "./components/share/ShareGroupModal";
 import { useTabGroups } from "./hooks/useTabGroups";
 import { useGroupEditor } from "./hooks/useGroupEditor";
-import ImportGroupModal from "./components/ImportGroupModal";
+import ImportGroupModal from "./components/import/ImportGroupModal";
 import { useState } from "react";
 
 function App() {

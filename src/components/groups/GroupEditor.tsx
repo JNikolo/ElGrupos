@@ -1,8 +1,8 @@
 import { Save, X, Edit3 } from "lucide-react";
-import { useGroupForm } from "../hooks/useGroupForm";
-import ColorPicker from "./ColorPicker";
+import { useGroupForm } from "../../hooks/useGroupForm";
+import ColorPicker from "../ui/ColorPicker";
 import GroupPreview from "./GroupPreview";
-import type { GroupData } from "../services/types";
+import type { GroupData } from "../../services/types";
 
 interface GroupEditorProps {
   isOpen: boolean;

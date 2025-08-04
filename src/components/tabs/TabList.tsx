@@ -1,7 +1,7 @@
 import { ExternalLink, Share2 } from "lucide-react";
 import TabItem from "./TabItem";
 // import CopyButton from "./CopyButton";
-import Tooltip from "./Tooltip";
+import Tooltip from "./ui/Tooltip";
 import { useState } from "react";
 import ShareGroupModal from "./ShareGroupModal";
 

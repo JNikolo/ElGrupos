@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MoreVertical } from "lucide-react";
-import Tooltip from "./Tooltip";
-import { useGroupActions } from "../hooks/useGroupActions";
+import Tooltip from "../ui/Tooltip";
+import { useGroupActions } from "../../hooks/useGroupActions";
 
 interface GroupActionsProps {
   groupId: number;

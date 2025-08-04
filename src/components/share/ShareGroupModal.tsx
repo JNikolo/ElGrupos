@@ -8,8 +8,8 @@ import {
   Eye,
   Check,
 } from "lucide-react";
-import LoadingSpinner from "./LoadingSpinner";
-import { useShareGroup } from "../hooks/useShareGroup";
+import LoadingSpinner from "../ui/LoadingSpinner";
+import { useShareGroup } from "../../hooks/useShareGroup";
 
 interface ShareGroupModalProps {
   groupId: number;

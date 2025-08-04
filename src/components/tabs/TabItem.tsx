@@ -1,5 +1,5 @@
 import { ExternalLink } from "lucide-react";
-import CopyButton from "./CopyButton";
+import CopyButton from "../ui/CopyButton";
 
 interface TabItemProps {
   tab: chrome.tabs.Tab;
