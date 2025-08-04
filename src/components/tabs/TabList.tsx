@@ -27,12 +27,6 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
       </div>
     );
   }
-
-  // const allLinks = tabs
-  //   .filter((tab) => tab.url)
-  //   .map((tab) => `- [${tab.title || "Untitled"}](${tab.url})`)
-  //   .join("\n");
-
   return (
     <>
       <div className="flex justify-end items-center gap-2 mb-2">
@@ -47,7 +41,6 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
             Share
           </button>
         </Tooltip>
-        {/* <CopyButton textToCopy={allLinks} id={`group-${groupId}`} /> */}
       </div>
       <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-custom">
         {tabs.map((tab) => (
