@@ -1,6 +1,6 @@
 import { ExternalLink, Share2 } from "lucide-react";
 import TabItem from "./TabItem";
-import CopyButton from "./CopyButton";
+// import CopyButton from "./CopyButton";
 import Tooltip from "./Tooltip";
 import { useState } from "react";
 import ShareGroupModal from "./ShareGroupModal";
@@ -28,10 +28,10 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
     );
   }
 
-  const allLinks = tabs
-    .filter((tab) => tab.url)
-    .map((tab) => `- [${tab.title || "Untitled"}](${tab.url})`)
-    .join("\n");
+  // const allLinks = tabs
+  //   .filter((tab) => tab.url)
+  //   .map((tab) => `- [${tab.title || "Untitled"}](${tab.url})`)
+  //   .join("\n");
 
   return (
     <>
@@ -47,7 +47,7 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
             Share
           </button>
         </Tooltip>
-        <CopyButton textToCopy={allLinks} id={`group-${groupId}`} />
+        {/* <CopyButton textToCopy={allLinks} id={`group-${groupId}`} /> */}
       </div>
       <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-custom">
         {tabs.map((tab) => (

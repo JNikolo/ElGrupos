@@ -1,4 +1,4 @@
-import { Folder, RefreshCw, Plus } from "lucide-react";
+import { Folder, RefreshCw, Plus, Import } from "lucide-react";
 import Header from "./components/Header";
 import TabGroupList from "./components/TabGroupList";
 import NoGroupsMessage from "./components/NoGroupsMessage";
@@ -8,6 +8,8 @@ import Tooltip from "./components/Tooltip";
 import GroupEditor from "./components/GroupEditor";
 import { useTabGroups } from "./hooks/useTabGroups";
 import { useGroupEditor } from "./hooks/useGroupEditor";
+import ImportGroupModal from "./components/ImportGroupModal";
+import { useState } from "react";
 
 function App() {
   // Get tab groups operations
@@ -37,6 +39,14 @@ function App() {
     onUpdateGroup: handleUpdateGroup, // Delegate update to useTabGroups
   });
 
+  const [isGroupImportOpen, setIsGroupImportOpen] = useState(false);
+  const openImportModal = () => {
+    setIsGroupImportOpen(true);
+  };
+  const closeImportModal = () => {
+    setIsGroupImportOpen(false);
+  };
+
   return (
     <div className="w-96 h-[600px] bg-material-dark flex flex-col overflow-hidden">
       <div className="bg-material-surface border border-material-border flex flex-col h-full overflow-hidden shadow-material-2">
@@ -53,10 +63,22 @@ function App() {
                 </span>
               </h2>
               <div className="flex items-center gap-2">
+                <Tooltip content="Import tab groups">
+                  <button
+                    onClick={() => openImportModal()}
+                    className="px-2 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
+                  >
+                    <Import className="w-3 h-3" />
+                    Import
+                  </button>
+                </Tooltip>
+                {isGroupImportOpen && (
+                  <ImportGroupModal handleClose={closeImportModal} />
+                )}
                 <Tooltip content="Create new group">
                   <button
                     onClick={() => openEditor()}
-                    className="px-3 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
+                    className="px-2 py-1 bg-material-secondary hover:bg-material-secondary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1"
                   >
                     <Plus className="w-3 h-3" />
                     Create
@@ -66,14 +88,13 @@ function App() {
                   <button
                     onClick={loadTabGroups}
                     disabled={loading}
-                    className={`px-3 py-1 bg-material-primary hover:bg-material-primary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 shadow-material-1 ${
+                    className={`px-2 py-1 text-material-primary hover:text-material-primary-dark text-material-text-primary rounded-material-medium transition-colors duration-[var(--animate-material-standard)] text-sm font-medium flex items-center gap-1 ${
                       loading ? "opacity-50 cursor-not-allowed" : ""
                     }`}
                   >
                     <RefreshCw
-                      className={`w-3 h-3 ${loading ? "animate-spin" : ""}`}
+                      className={`w-4 h-4 ${loading ? "animate-spin" : ""}`}
                     />
-                    Refresh
                   </button>
                 </Tooltip>
               </div>
