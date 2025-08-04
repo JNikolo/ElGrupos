@@ -1,4 +1,4 @@
-import TabGroup from "../TabGroup";
+import TabGroup from "./TabGroup";
 
 interface TabGroupListProps {
   tabGroups: chrome.tabGroups.TabGroup[];

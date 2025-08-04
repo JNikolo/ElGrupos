@@ -1,6 +1,6 @@
 import { Palette } from "lucide-react";
-import { TAB_GROUP_COLORS } from "../utils/groupColors";
-import type { ChromeTabGroupColor } from "../services/types";
+import { TAB_GROUP_COLORS } from "../..//utils/groupColors";
+import type { ChromeTabGroupColor } from "../../services/types";
 
 interface ColorPickerProps {
   selectedColor: ChromeTabGroupColor;

@@ -6,10 +6,10 @@ import LoadingSpinner from "./components/ui/LoadingSpinner";
 import ErrorMessage from "./components/ui/ErrorMessage";
 import Tooltip from "./components/ui/Tooltip";
 import GroupEditor from "./components/groups/GroupEditor";
-import ShareGroupModal from "./components/share/ShareGroupModal";
+import ShareGroupModal from "./components/share/ShareGroup";
 import { useTabGroups } from "./hooks/useTabGroups";
 import { useGroupEditor } from "./hooks/useGroupEditor";
-import ImportGroupModal from "./components/import/ImportGroupModal";
+import ImportGroup from "./components/import/ImportGroup";
 import { useState } from "react";
 
 function App() {
@@ -84,7 +84,7 @@ function App() {
                   </button>
                 </Tooltip>
                 {isGroupImportOpen && (
-                  <ImportGroupModal
+                  <ImportGroup
                     handleClose={closeImportModal}
                     onImport={async (data) => {
                       try {

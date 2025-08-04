@@ -1,9 +1,9 @@
 import { ExternalLink, Share2 } from "lucide-react";
 import TabItem from "./TabItem";
 // import CopyButton from "./CopyButton";
-import Tooltip from "./ui/Tooltip";
+import Tooltip from "../ui/Tooltip";
 import { useState } from "react";
-import ShareGroupModal from "./ShareGroupModal";
+import ShareGroup from "../share/ShareGroup";
 
 interface TabListProps {
   tabs: chrome.tabs.Tab[];
@@ -54,7 +54,7 @@ const TabList = ({ tabs, groupId }: TabListProps) => {
           <TabItem key={tab.id} tab={tab} />
         ))}
       </div>
-      {isOpen && <ShareGroupModal groupId={groupId} handleClose={onClose} />}
+      {isOpen && <ShareGroup groupId={groupId} handleClose={onClose} />}
     </>
   );
 };
