@@ -1,9 +1,9 @@
 import Header from "./components/layout/Header";
-import GroupEditor from "./components/groups/GroupEditor";
-import ShareGroupModal from "./components/share/ShareGroup";
 import GroupsHeader from "./components/groups/GroupsHeader";
 import GroupsContent from "./components/groups/GroupsContent";
 import ImportModal from "./components/modals/ImportModal";
+import GroupEditorModal from "./components/modals/GroupEditorModal";
+import ShareGroupModal from "./components/modals/ShareGroupModal";
 import { useTabGroups } from "./hooks/useTabGroups";
 import { useGroupEditor } from "./hooks/useGroupEditor";
 import { useImportModal } from "./hooks/useImportModal";
@@ -91,7 +91,7 @@ function App() {
         onImport={handleImportGroups}
       />
 
-      <GroupEditor
+      <GroupEditorModal
         isOpen={isGroupEditorOpen}
         onClose={closeEditor}
         onSave={saveGroup}
@@ -99,12 +99,11 @@ function App() {
         mode={mode}
       />
 
-      {isShareOpen && shareGroup && (
-        <ShareGroupModal
-          groupId={shareGroup.id}
-          handleClose={closeShareModal}
-        />
-      )}
+      <ShareGroupModal
+        isOpen={isShareOpen}
+        onClose={closeShareModal}
+        groupId={shareGroup?.id || 0}
+      />
     </div>
   );
 }
