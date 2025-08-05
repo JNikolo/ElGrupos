@@ -12,8 +12,7 @@
       "128": "icons/icon-128.png"
     }
   },
-  "permissions": ["tabs", "activeTab", "tabGroups"],
-  "host_permissions": ["https://*/*", "http://*/*"],
+  "permissions": ["tabs", "tabGroups"],
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
