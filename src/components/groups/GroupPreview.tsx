@@ -1,5 +1,5 @@
-import { getColorConfig } from "../utils/groupColors";
-import type { ChromeTabGroupColor } from "../services/types";
+import { getColorConfig } from "../../utils/groupColors";
+import type { ChromeTabGroupColor } from "../../services/types";
 
 interface GroupPreviewProps {
   title: string;

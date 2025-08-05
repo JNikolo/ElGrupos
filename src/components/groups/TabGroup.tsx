@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import TabList from "./TabList";
-import { getGroupColor } from "../utils/colorUtils";
-import LoadingSpinner from "./LoadingSpinner";
+import TabList from "../tabs/TabList";
+import { getGroupColor } from "../../utils/colorUtils";
+import LoadingSpinner from "../ui/LoadingSpinner";
 import GroupActions from "./GroupActions";
 
 interface TabGroupProps {
