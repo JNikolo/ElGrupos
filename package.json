@@ -1,14 +1,13 @@
 {
-  "name": "tabs-share",
+  "name": "elgrupos",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "build:chrome": "npm run build && rm -rf /mnt/d/projects/extension-build/ && cp -r dist /mnt/d/projects/extension-build"
+    "preview": "vite preview"
   },
   "dependencies": {
     "lucide-react": "^0.532.0",
