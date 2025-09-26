@@ -1,7 +1,7 @@
 {
   "name": "ElGrupos",
   "description": "Chrome Extension to manage and share your tab groups with ease.",
-  "version": "1.0",
+  "version": "1.0.1",
   "manifest_version": 3,
   "action": {
     "default_popup": "index.html",
