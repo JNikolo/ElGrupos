@@ -8,6 +8,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      # Required to create a GitHub release and tag, as GITHUB_TOKEN is read-only by default.
 
     steps:
       - name: Checkout repository
