@@ -31,6 +31,7 @@ jobs:
         run: |
           cd dist
           zip -r ../extension-${{ github.ref_name }}.zip .
+          cd ..
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
