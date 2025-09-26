@@ -36,14 +36,14 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/extension-${{ github.ref_name }}.zip
+          files: extension-${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to Chrome Web Store
         run: |
           npx chrome-webstore-upload-cli upload \
-            --source dist/extension-${{ github.ref_name }}.zip \
+            --source extension-${{ github.ref_name }}.zip \
             --extension-id $EXTENSION_ID \
             --client-id $CLIENT_ID \
             --client-secret $CLIENT_SECRET \
