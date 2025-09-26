@@ -10,16 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-          name: extension-build
-          path: dist/
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Zip extension
-        run: zip -r dist/extension-${{ github.ref_name }}.zip dist/*
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Package extension
+        run: |
+          mkdir -p dist
+          zip -r dist/extension-${{ github.ref_name }}.zip ./public ./src manifest.json index.html
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
