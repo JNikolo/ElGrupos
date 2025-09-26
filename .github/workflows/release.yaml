@@ -29,8 +29,8 @@ jobs:
 
       - name: Package extension
         run: |
-          mkdir -p dist
-          zip -r dist/extension-${{ github.ref_name }}.zip ./public ./src manifest.json index.html
+          cd dist
+          zip -r ../extension-${{ github.ref_name }}.zip .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
